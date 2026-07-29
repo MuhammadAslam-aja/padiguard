@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -197,7 +199,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       'Masukkan email terdaftar Anda dan buat password baru.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: isDark ? Colors.white60 : Colors.black60,
+                        color: isDark ? Colors.white60 : Colors.black54,
                       ),
                     ),
                     const SizedBox(height: 16),
