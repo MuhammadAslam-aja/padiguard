@@ -6,8 +6,8 @@ base_dir = r"c:\laragon\www\KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI"
 build_web_dir = os.path.join(base_dir, "build", "web")
 backend_dir = os.path.join(base_dir, "backend")
 
-print("1. Running flutter build web --release...")
-res = subprocess.run(["flutter", "build", "web", "--release"], cwd=base_dir, shell=True)
+print("1. Running flutter build web --release --no-tree-shake-icons...")
+res = subprocess.run(["flutter", "build", "web", "--release", "--no-tree-shake-icons"], cwd=base_dir, shell=True)
 if res.returncode != 0:
     print("Build failed!")
     exit(1)
