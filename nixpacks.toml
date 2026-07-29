@@ -1,3 +1,5 @@
+providers = ["php"]
+
 [phases.setup]
 nixPkgs = ["php83", "php83Extensions.gd", "php83Extensions.pdo", "php83Extensions.pdo_mysql", "php83Extensions.curl", "php83Extensions.mbstring", "php83Extensions.openssl", "php83Extensions.fileinfo", "php83Extensions.zip"]
 
