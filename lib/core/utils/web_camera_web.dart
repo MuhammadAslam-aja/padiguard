@@ -134,13 +134,11 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
   bool _isWaitingPermission = true; // true saat menunggu izin browser
   bool _isFrontCamera = false; // false = kamera belakang (environment), true = kamera depan (user)
   String _errorMsg = '';
-  late final String _viewId;
+  String _viewId = '';
 
   @override
   void initState() {
     super.initState();
-    _cameraViewCounter++;
-    _viewId = 'webcam-view-$_cameraViewCounter';
     _startCamera();
     // Timeout 30 detik — jika kamera belum siap, tampilkan pesan
     Future.delayed(const Duration(seconds: 30), () {
@@ -201,6 +199,9 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
         ..style.display = 'block';
 
       _videoElement = video;
+
+      _cameraViewCounter++;
+      _viewId = 'webcam-view-$_cameraViewCounter';
 
       // Daftarkan view factory agar HtmlElementView bisa merender video element
       ui_web.platformViewRegistry.registerViewFactory(
@@ -348,21 +349,10 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.flip_camera_ios, color: Color(0xFF81C784)),
-                        tooltip: _isFrontCamera ? 'Ganti ke Kamera Belakang' : 'Ganti ke Kamera Depan',
-                        onPressed: _toggleCameraFacing,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white54),
-                        onPressed: () {
-                          _stopCamera();
-                          Navigator.of(context).pop(null);
-                        },
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.flip_camera_ios, color: Color(0xFF81C784)),
+                    tooltip: _isFrontCamera ? 'Ganti ke Kamera Belakang' : 'Ganti ke Kamera Depan',
+                    onPressed: _toggleCameraFacing,
                   ),
                 ],
               ),
@@ -425,7 +415,7 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
                       ),
                     )
                   : _isReady
-                      ? HtmlElementView(viewType: _viewId)
+                      ? HtmlElementView(key: ValueKey(_viewId), viewType: _viewId)
                       : Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),

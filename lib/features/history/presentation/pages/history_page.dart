@@ -25,6 +25,23 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   DateTime? _selectedDate;
   final TextEditingController _searchController = TextEditingController();
 
+  String _formatImageUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return '';
+    final url = rawUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
+      return url;
+    }
+    final baseUrl = AppConstants.baseUrl;
+    if (url.startsWith('/')) {
+      return '$baseUrl${url.substring(1)}';
+    }
+    if (url.startsWith('uploads/')) {
+      final filename = url.substring('uploads/'.length);
+      return '${baseUrl}api/image?file=$filename';
+    }
+    return '$baseUrl$url';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -312,10 +329,16 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(10),
                                   child: Image.network(
-                                    item['imageUrl'],
+                                    _formatImageUrl(item['imageUrl']),
                                     width: 54,
                                     height: 54,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: 54,
+                                      height: 54,
+                                      color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade200,
+                                      child: const Icon(Icons.eco, color: Color(0xFF4CAF50)),
+                                    ),
                                   ),
                                 ),
                               ),

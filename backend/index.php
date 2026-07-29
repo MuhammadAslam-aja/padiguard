@@ -635,7 +635,7 @@ function normalizeUrls($data) {
             if (is_array($value)) {
                 $value = normalizeUrls($value);
             } elseif (is_string($value)) {
-                if (preg_match('#/uploads/(det_[^?\s]+|avatar_[^?\s]+|ds_[^?\s]+)#', $value, $matches)) {
+                if (preg_match('#(?:^|/|uploads/)(det_[^?\s]+|avatar_[^?\s]+|ds_[^?\s]+)#', $value, $matches)) {
                     $value = $baseUrl . '/api/image?file=' . $matches[1];
                 } elseif (preg_match('#http://(?:localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)(?::\d+)?/[^/]+/backend/(api/image\?file=[^\s]+)#i', $value, $matches)) {
                     $value = $baseUrl . '/' . $matches[1];

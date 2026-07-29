@@ -14,6 +14,23 @@ class DetectionDetailSheet extends StatelessWidget {
     required this.onDelete,
   });
 
+  String _formatImageUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return '';
+    final url = rawUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
+      return url;
+    }
+    const baseUrl = 'https://tirza_padiguard-production.up.railway.app/';
+    if (url.startsWith('/')) {
+      return '$baseUrl${url.substring(1)}';
+    }
+    if (url.startsWith('uploads/')) {
+      final filename = url.substring('uploads/'.length);
+      return '${baseUrl}api/image?file=$filename';
+    }
+    return '$baseUrl$url';
+  }
+
   Color _getDangerColor(String dangerLevel) {
     switch (dangerLevel) {
       case 'Tinggi':
@@ -141,7 +158,7 @@ class DetectionDetailSheet extends StatelessWidget {
                     height: 280,
                     width: double.infinity,
                     child: YoloBoundingBox(
-                      imageUrl: detection['imageUrl'],
+                      imageUrl: _formatImageUrl(detection['imageUrl']),
                       boundingBoxes: detection['boundingBoxes'] ?? [],
                     ),
                   ),
