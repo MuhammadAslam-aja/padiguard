@@ -5,8 +5,6 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, ngrok-skip-browser-warning");
-header("Content-Type: application/json; charset=UTF-8");
-// Header khusus agar ngrok tidak memunculkan halaman interstitial
 header("ngrok-skip-browser-warning: true");
 
 error_reporting(E_ALL);
@@ -18,7 +16,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-// 2. Hubungkan ke Database (Auto-Migrate)
+// 2. LAYANI FLUTTER WEB FRONTEND (JIKA BUKAN REQUEST UNTUK /api)
+$requestUri = $_SERVER['REQUEST_URI'];
+$uriPath = strtok(rawurldecode($requestUri), '?');
+
+if (stripos($uriPath, '/api') === false) {
+    $file = ltrim($uriPath, '/');
+    $filePath = __DIR__ . '/' . $file;
+    
+    // Jika file spesifik ada (seperti main.dart.js, flutter.js, assets/..., dll)
+    if (!empty($file) && file_exists($filePath) && !is_dir($filePath)) {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'html' => 'text/html; charset=UTF-8',
+            'js'   => 'application/javascript',
+            'json' => 'application/json',
+            'css'  => 'text/css',
+            'png'  => 'image/png',
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif'  => 'image/gif',
+            'svg'  => 'image/svg+xml',
+            'wasm' => 'application/wasm',
+            'ttf'  => 'font/ttf',
+            'otf'  => 'font/otf',
+            'woff' => 'font/woff',
+            'woff2'=> 'font/woff2',
+        ];
+        $contentType = isset($contentTypes[$ext]) ? $contentTypes[$ext] : 'application/octet-stream';
+        header("Content-Type: $contentType");
+        header("Content-Length: " . filesize($filePath));
+        readfile($filePath);
+        exit;
+    } else {
+        // Fallback ke index.html untuk SPA Web UI
+        $indexHtml = __DIR__ . '/index.html';
+        if (file_exists($indexHtml)) {
+            header("Content-Type: text/html; charset=UTF-8");
+            readfile($indexHtml);
+            exit;
+        }
+    }
+}
+
+// 3. DEFAULT API HEADER (Hanya untuk rute /api)
+header("Content-Type: application/json; charset=UTF-8");
+
+// 4. Hubungkan ke Database (Auto-Migrate)
 require_once __DIR__ . '/connection.php';
 
 // 3. Helper Functions
@@ -599,18 +643,7 @@ if (!file_exists($uploadDir)) {
 $scriptName = $_SERVER['SCRIPT_NAME']; // "/KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI/backend/index.php"
 $requestUri = $_SERVER['REQUEST_URI'];
 $decodedUri = rawurldecode($requestUri);
-$requestPath = strtok($decodedUri, '?');
-// Jika request bukan untuk /api, layani Flutter Web UI dari backend/index.html
-if (stripos($requestPath, '/api') === false) {
-    $indexHtml = __DIR__ . '/index.html';
-    if (file_exists($indexHtml)) {
-        header("Access-Control-Allow-Origin: *");
-        header("Content-Type: text/html; charset=UTF-8");
-        readfile($indexHtml);
-        exit;
-    }
-}
-
+$scriptDir = dirname($scriptName);
 $basePath = rtrim(str_replace('\\', '/', $scriptDir), '/') . '/api'; // Base API Path
 // Gunakan str_ireplace agar case-insensitive (mengatasi casing URL dari browser/Windows)
 $path = str_ireplace($basePath, '', strtok($decodedUri, '?'));
