@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../../config/constants.dart';
 import '../../../../config/theme.dart';
 import '../../../../core/widgets/yolo_bounding_box.dart';
 
@@ -20,15 +21,16 @@ class DetectionDetailSheet extends StatelessWidget {
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
       return url;
     }
-    const baseUrl = 'https://tirza_padiguard-production.up.railway.app/';
+    final apiBase = AppConstants.baseUrl;
+    final origin = apiBase.replaceAll(RegExp(r'api/?$'), '');
     if (url.startsWith('/')) {
-      return '$baseUrl${url.substring(1)}';
+      return '$origin${url.substring(1)}';
     }
     if (url.startsWith('uploads/')) {
       final filename = url.substring('uploads/'.length);
-      return '${baseUrl}api/image?file=$filename';
+      return '${apiBase}image?file=$filename';
     }
-    return '$baseUrl$url';
+    return '$origin$url';
   }
 
   Color _getDangerColor(String dangerLevel) {

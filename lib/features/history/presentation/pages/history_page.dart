@@ -31,15 +31,16 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
       return url;
     }
-    final baseUrl = AppConstants.baseUrl;
+    final apiBase = AppConstants.baseUrl;
+    final origin = apiBase.replaceAll(RegExp(r'api/?$'), '');
     if (url.startsWith('/')) {
-      return '$baseUrl${url.substring(1)}';
+      return '$origin${url.substring(1)}';
     }
     if (url.startsWith('uploads/')) {
       final filename = url.substring('uploads/'.length);
-      return '${baseUrl}api/image?file=$filename';
+      return '${apiBase}image?file=$filename';
     }
-    return '$baseUrl$url';
+    return '$origin$url';
   }
 
   @override

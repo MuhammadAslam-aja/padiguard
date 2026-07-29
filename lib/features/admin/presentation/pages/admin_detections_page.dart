@@ -25,6 +25,24 @@ class _AdminDetectionsPageState extends ConsumerState<AdminDetectionsPage> {
   DateTime? _selectedDate;
   final TextEditingController _dateController = TextEditingController();
 
+  String _formatImageUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return '';
+    final url = rawUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:image')) {
+      return url;
+    }
+    final apiBase = AppConstants.baseUrl;
+    final origin = apiBase.replaceAll(RegExp(r'api/?$'), '');
+    if (url.startsWith('/')) {
+      return '$origin${url.substring(1)}';
+    }
+    if (url.startsWith('uploads/')) {
+      final filename = url.substring('uploads/'.length);
+      return '${apiBase}image?file=$filename';
+    }
+    return '$origin$url';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -278,10 +296,16 @@ class _AdminDetectionsPageState extends ConsumerState<AdminDetectionsPage> {
                             leading: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.network(
-                                item['imageUrl'],
+                                _formatImageUrl(item['imageUrl']),
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: const Color(0xFF0F172A),
+                                  child: const Icon(Icons.eco, color: Color(0xFF4CAF50)),
+                                ),
                               ),
                             ),
                             title: Text(

@@ -72,6 +72,20 @@ class AdminShellLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pending = ref.read(pendingNotificationProvider);
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = rootNavigatorKey.currentContext ?? context;
+        AppNotification.show(
+          ctx,
+          title: pending.title,
+          message: pending.message,
+          type: pending.type,
+        );
+        ref.read(pendingNotificationProvider.notifier).state = null;
+      });
+    }
+
     ref.listen<PendingNotification?>(pendingNotificationProvider, (prev, next) {
       if (next != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
