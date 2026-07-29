@@ -6,7 +6,7 @@ class AppConstants {
   
   // API Config
   static const bool useMockApi = false; // Set to true to run offline mock simulator
-  static const String defaultBaseUrl = 'http://localhost/padibackend/backend/';
+  static const String defaultBaseUrl = 'https://tirza-padiguard-production.up.railway.app/api/';
 
   /// Base URL dinamis: otomatis menyesuaikan domain/IP/Ngrok saat diakses lewat web
   static String get baseUrl {
