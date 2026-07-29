@@ -24,6 +24,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscureText = true;
   bool _rememberMe = false;
+  String? _loginErrorMessage;
 
   @override
   void dispose() {
@@ -47,6 +48,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() {
+      _loginErrorMessage = null;
+    });
+
     final email    = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -65,9 +70,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // Gagal login: tampilkan di sini langsung
       if (mounted) {
         final state = ref.read(authProvider);
+        final errorMsg = state.errorMessage ?? 'Email atau password yang Anda masukkan salah.';
+        setState(() {
+          _loginErrorMessage = errorMsg;
+        });
+
         AppNotification.loginError(
           context,
-          state.errorMessage ?? 'Login Gagal. Coba lagi.',
+          errorMsg,
         );
       }
     }
@@ -415,6 +425,36 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Alert Notifikasi Gagal Login
+                      if (_loginErrorMessage != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF9F1239).withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFB7185).withOpacity(0.5), width: 1.2),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Color(0xFFFB7185), size: 22),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _loginErrorMessage!,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
                       // Email Field
                       Text(
                         'Email',

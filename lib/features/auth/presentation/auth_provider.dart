@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -105,11 +106,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
     } on DioException catch (e) {
-      final msg = e.response?.data?['message'] ?? 'Email atau password salah.';
+      String msg = 'Email atau password yang Anda masukkan salah.';
+      final resData = e.response?.data;
+      if (resData is Map && resData['message'] != null) {
+        msg = resData['message'].toString();
+      } else if (resData is String && resData.isNotEmpty) {
+        try {
+          final parsed = jsonDecode(resData);
+          if (parsed is Map && parsed['message'] != null) {
+            msg = parsed['message'].toString();
+          }
+        } catch (_) {}
+      }
       state = AuthState.error(msg);
       return false;
     } catch (e) {
-      state = AuthState.error('Koneksi terganggu. Coba lagi.');
+      state = AuthState.error('Terjadi kesalahan koneksi. Silakan coba lagi.');
       return false;
     }
   }
