@@ -21,6 +21,15 @@ class DioClient {
           // Dynamic baseUrl update per request (handles web host changes: localhost, IP, ngrok)
           options.baseUrl = AppConstants.baseUrl;
           
+          // Bersihkan prefix 'api/' jika baseUrl sudah berakhiran '/api/' untuk mencegah duplikasi URL (/api/api/...)
+          if (options.baseUrl.endsWith('/api/') || options.baseUrl.endsWith('/api')) {
+            if (options.path.startsWith('api/')) {
+              options.path = options.path.substring(4);
+            } else if (options.path.startsWith('/api/')) {
+              options.path = options.path.substring(5);
+            }
+          }
+          
           // Add JWT Token to header if exists
           try {
             final token = await secureStorage.read(AppConstants.keyToken).timeout(

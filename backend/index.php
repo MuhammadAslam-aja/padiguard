@@ -671,6 +671,13 @@ if (preg_match('#/api(/.*)?$#i', $cleanUri, $matches)) {
 }
 $path = rtrim($path, '/');
 $path = preg_replace('#/+#', '/', $path);
+
+// Bersihkan duplikasi prefix /api jika ada (misal /api/api/auth/login -> /auth/login)
+while (preg_match('#^/api(/.*)?$#i', $path, $m)) {
+    $path = !empty($m[1]) ? $m[1] : '/';
+    $path = rtrim($path, '/');
+}
+
 if (empty($path) || $path[0] !== '/') {
     $path = '/' . $path;
 }
