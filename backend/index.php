@@ -597,9 +597,52 @@ if (!file_exists($uploadDir)) {
 
 // 4. Parsing Request URI
 $scriptName = $_SERVER['SCRIPT_NAME']; // "/KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI/backend/index.php"
-$scriptDir = dirname($scriptName); // "/KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI/backend"
-$requestUri = $_SERVER['REQUEST_URI']; // "/KLASIFIKASI JENIS HAMA.../backend/api/auth/login"
+$requestUri = $_SERVER['REQUEST_URI'];
 $decodedUri = rawurldecode($requestUri);
+$requestPath = strtok($decodedUri, '?');
+// Jika request bukan untuk /api, layani Flutter Web UI dari folder web_app
+if (stripos($requestPath, '/api') === false) {
+    $webDir = __DIR__ . '/../web_app';
+    if (file_exists($webDir)) {
+        $file = ltrim($requestPath, '/');
+        $filePath = $webDir . '/' . $file;
+        
+        if (!empty($file) && file_exists($filePath) && !is_dir($filePath)) {
+            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $contentTypes = [
+                'html' => 'text/html; charset=UTF-8',
+                'js'   => 'application/javascript',
+                'json' => 'application/json',
+                'css'  => 'text/css',
+                'png'  => 'image/png',
+                'jpg'  => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif'  => 'image/gif',
+                'svg'  => 'image/svg+xml',
+                'wasm' => 'application/wasm',
+                'ttf'  => 'font/ttf',
+                'otf'  => 'font/otf',
+                'woff' => 'font/woff',
+                'woff2'=> 'font/woff2',
+            ];
+            $contentType = isset($contentTypes[$ext]) ? $contentTypes[$ext] : 'application/octet-stream';
+            header("Access-Control-Allow-Origin: *");
+            header("Content-Type: $contentType");
+            header("Content-Length: " . filesize($filePath));
+            readfile($filePath);
+            exit;
+        } else {
+            // SPA fallback ke index.html
+            $indexHtml = $webDir . '/index.html';
+            if (file_exists($indexHtml)) {
+                header("Access-Control-Allow-Origin: *");
+                header("Content-Type: text/html; charset=UTF-8");
+                readfile($indexHtml);
+                exit;
+            }
+        }
+    }
+}
 
 $basePath = rtrim(str_replace('\\', '/', $scriptDir), '/') . '/api'; // Base API Path
 // Gunakan str_ireplace agar case-insensitive (mengatasi casing URL dari browser/Windows)
