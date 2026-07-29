@@ -384,8 +384,8 @@ function isRicePlantImage($imagePath) {
     }
     
     // E. HARUS memiliki minimal 8% piksel bernuansa tanaman padi / sawah (daun/batang/gabah/tanah sawah)
-    if ($riceRatio < 0.08 && $skinRatio > 0.05) {
-        return ['valid' => false, 'reason' => 'Gambar tidak cukup mengandung karakteristik warna tanaman padi (hijau/kuning/coklat padi).'];
+    if ($riceRatio < 0.08) {
+        return ['valid' => false, 'reason' => 'Gambar tidak terdeteksi mengandung tanaman padi (tidak ada daun, batang, gabah, atau sawah).'];
     }
     
     return ['valid' => true, 'reason' => ''];

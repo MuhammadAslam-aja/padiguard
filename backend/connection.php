@@ -313,21 +313,51 @@ try {
     // Abaikan jika tabel belum ada
 }
 
-// Sinkronkan hash untuk dataset yang diunggah secara lokal jika hash-nya masih kosong
+// Sinkronkan secara otomatis file sampel dataset dari folder dataset_samples ke dalam database MySQL
 try {
-    $stmt = $pdo->query("SELECT * FROM `dataset` WHERE `hash` IS NULL");
-    $nullHashes = $stmt->fetchAll();
-    if (!empty($nullHashes)) {
-        $stmtUpdate = $pdo->prepare("UPDATE `dataset` SET `hash` = ? WHERE `id` = ?");
-        foreach ($nullHashes as $ds) {
-            $localPath = getLocalFilePath($ds['imageUrl']);
-            if ($localPath && file_exists($localPath)) {
-                $hash = getAverageHash($localPath);
-                if ($hash) {
-                    $stmtUpdate->execute([$hash, $ds['id']]);
+    $samplesDir = __DIR__ . '/dataset_samples';
+    if (file_exists($samplesDir)) {
+        $sampleFiles = glob($samplesDir . '/*.{jpg,jpeg,png,webp}', GLOB_BRACE);
+        if ($sampleFiles) {
+            $uploadsDir = __DIR__ . '/uploads';
+            if (!file_exists($uploadsDir)) @mkdir($uploadsDir, 0777, true);
+            
+            $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM `dataset` WHERE `id` = ?");
+            $stmtInsert = $pdo->prepare("INSERT INTO `dataset` (`id`, `label`, `imageUrl`, `hash`) VALUES (?, ?, ?, ?)");
+            
+            foreach ($sampleFiles as $samplePath) {
+                $filename = basename($samplePath);
+                $dsId = 'ds_' . md5($filename);
+                
+                $stmtCheck->execute([$dsId]);
+                if ($stmtCheck->fetchColumn() == 0) {
+                    $targetPath = $uploadsDir . '/' . $filename;
+                    if (!file_exists($targetPath)) {
+                        @copy($samplePath, $targetPath);
+                    }
+                    
+                    $label = 'Padi Sehat';
+                    if (strpos($filename, 'wereng_coklat') !== false) {
+                        $label = 'Setengah Matang - Wereng Coklat (Spot Hopperburn)';
+                    } elseif (strpos($filename, 'penggerek_batang') !== false) {
+                        $label = 'Setengah Matang - Penggerek Batang';
+                    } elseif (strpos($filename, 'rumput') !== false) {
+                        $label = 'Rumput / Gulma (Bukan Padi)';
+                    } elseif (strpos($filename, 'matang_-_sehat') !== false) {
+                        $label = 'Matang - Sehat';
+                    } elseif (strpos($filename, 'mentah_-_sehat') !== false) {
+                        $label = 'Mentah - Sehat';
+                    } elseif (strpos($filename, 'setengah_matang_-_sehat') !== false) {
+                        $label = 'Setengah Matang - Sehat';
+                    }
+                    
+                    $imageUrl = 'uploads/' . $filename;
+                    $hash = getAverageHash($targetPath);
+                    $stmtInsert->execute([$dsId, $label, $imageUrl, $hash]);
                 }
             }
         }
     }
 } catch (\Exception $e) {}
+
 
