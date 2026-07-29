@@ -361,28 +361,30 @@ function isRicePlantImage($imagePath) {
     $grayRatio     = $grayNonPadiCount / $totalSamples;
     $riceRatio     = $riceColorCount / $totalSamples;
     
-    // A. TOLAK jika dominan kulit manusia (wajah / tubuh) > 8% piksel
-    if ($skinRatio > 0.08) {
+    // A. TOLAK jika dominan kulit manusia (wajah / tubuh)
+    // Catatan: Jika riceRatio >= 0.08 (ada konteks tanaman padi/sawah), tanah/jalan coklat di sawah TIDAK dianggap kulit manusia
+    $skinThreshold = ($riceRatio >= 0.08) ? 0.35 : 0.12;
+    if ($skinRatio > $skinThreshold) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia, bukan tanaman padi.'];
     }
     
-    // B. TOLAK jika ada pakaian buatan manusia cukup banyak > 6%
-    if ($clothingRatio > 0.06) {
+    // B. TOLAK jika ada pakaian buatan manusia cukup banyak (>15% piksel) jika tidak ada padi
+    if ($clothingRatio > 0.15 && $riceRatio < 0.10) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian/baju), bukan tanaman padi.'];
     }
     
-    // C. TOLAK jika > 50% background dokumen/UI/screenshot (putih/hitam solid)
-    if ($docRatio > 0.50) {
+    // C. TOLAK jika > 65% background dokumen/UI/screenshot (putih/hitam solid)
+    if ($docRatio > 0.65) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos, bukan tanaman padi.'];
     }
     
-    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 65% dan padi < 10%)
-    if (($blueRatio + $grayRatio) > 0.65 && $riceRatio < 0.10) {
+    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 70% dan padi < 5%)
+    if (($blueRatio + $grayRatio) > 0.70 && $riceRatio < 0.05) {
         return ['valid' => false, 'reason' => 'Gambar didominasi langit atau objek buatan, bukan tanaman padi.'];
     }
     
-    // E. HARUS memiliki minimal 15% piksel bernuansa tanaman padi / sawah
-    if ($riceRatio < 0.15) {
+    // E. HARUS memiliki minimal 8% piksel bernuansa tanaman padi / sawah (daun/batang/gabah/tanah sawah)
+    if ($riceRatio < 0.08 && $skinRatio > 0.05) {
         return ['valid' => false, 'reason' => 'Gambar tidak cukup mengandung karakteristik warna tanaman padi (hijau/kuning/coklat padi).'];
     }
     
@@ -499,18 +501,28 @@ Jawab HANYA dalam format JSON ini (tanpa teks lain):
         "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 128]
     ];
     
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    $response = null;
+    $httpCode = 0;
     
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    foreach ($models as $model) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 && !empty($response)) {
+            break;
+        }
+    }
     
     if ($httpCode !== 200 || !$response) return null;
     
@@ -577,18 +589,28 @@ Jika gambar adalah sawah sehat, sawah normal, atau tidak ada tanda hama, kembali
         ]
     ];
     
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    $response = null;
+    $httpCode = 0;
     
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    foreach ($models as $model) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 && !empty($response)) {
+            break;
+        }
+    }
     
     if ($httpCode !== 200 || !$response) return null;
     
