@@ -262,13 +262,9 @@ function analyzeMaturity($imagePath) {
 }
 
 function isRicePlantImage($imagePath) {
-    if (!file_exists($imagePath)) return ['valid' => true, 'reason' => ''];
-    if (!function_exists('imagecreatefromjpeg') && !function_exists('imagecreatefrompng')) {
-        return ['valid' => true, 'reason' => '']; // Safe fallback jika GD PHP tidak diaktifkan
-    }
-    
+    if (!file_exists($imagePath)) return ['valid' => false, 'reason' => 'File tidak ditemukan'];
     $info = @getimagesize($imagePath);
-    if (!$info) return ['valid' => true, 'reason' => ''];
+    if (!$info) return ['valid' => false, 'reason' => 'Format file bukan gambar yang valid'];
     
     $mime = $info['mime'];
     if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
@@ -278,21 +274,19 @@ function isRicePlantImage($imagePath) {
     } elseif ($mime == 'image/webp') {
         $img = @imagecreatefromwebp($imagePath);
     } else {
-        return ['valid' => true, 'reason' => ''];
+        return ['valid' => false, 'reason' => 'Format gambar harus JPG, PNG, atau WEBP'];
     }
-    
-    if (!$img) return ['valid' => true, 'reason' => ''];
+    if (!$img) return ['valid' => false, 'reason' => 'Gagal membuka file gambar'];
     
     $w = imagesx($img);
     $h = imagesy($img);
     
-    $riceColorCount = 0;
     $documentBgCount = 0;
     $skinColorCount = 0;
     $artificialClothingCount = 0;
-    $deepForestCount = 0;
     $blueNonPadiCount = 0;
     $grayNonPadiCount = 0;
+    $riceColorCount = 0;
     
     $sampleX = 60;
     $sampleY = 60;
@@ -309,43 +303,44 @@ function isRicePlantImage($imagePath) {
             $g = ($rgb >> 8) & 0xFF;
             $b = $rgb & 0xFF;
             
-            // 1. Deteksi Kulit Manusia (diperluas: tone kulit dari gelap hingga terang)
-            $isSkinLight = ($r > 180 && $g > 140 && $b > 100 && $r > $g && $r > $b && ($r - $b) > 20 && abs($r - $g) < 80);
-            $isSkinMid   = ($r > 120 && $g > 80 && $b > 50 && $r > $g && $r > $b && ($r - $b) > 15 && ($r - $g) > 8 && ($g - $b) > 5);
-            $isSkinDark  = ($r > 60 && $g > 35 && $b > 15 && $r > $g && $r > $b && ($r - $b) > 10 && abs($r - $g) < 60);
-            if ($isSkinLight || $isSkinMid || $isSkinDark) {
+            // 1. Deteksi Kulit Manusia Presisi Tinggi (YCbCr + RGB space - Universal skintones)
+            $cb = 128 - 0.168736 * $r - 0.331264 * $g + 0.5 * $b;
+            $cr = 128 + 0.418688 * $r - 0.345842 * $g - 0.072846 * $b;
+            
+            $isRgbSkin   = ($r > 60) && ($g > 40) && ($b > 20) && ($r > $g) && ($g > $b) && (($r - $g) >= 12);
+            $isYcbcrSkin = ($cb >= 80 && $cb <= 122) && ($cr >= 138 && $cr <= 170);
+            if ($isRgbSkin && $isYcbcrSkin) {
                 $skinColorCount++;
             }
             
-            // 2. Deteksi Baju / Pakaian Buatan & warna artificial non-padi
-            $isRedShirt    = ($r > 170 && $g < 80 && $b < 80);
-            $isBlueShirt   = ($b > 140 && $b > $r + 30 && $b > $g + 30);
-            $isPurpleShirt = ($r > 100 && $b > 100 && $g < 90 && abs($r - $b) < 60);
-            $isOrangeShirt = ($r > 200 && $g > 80 && $g < 160 && $b < 60);
+            // 2. Deteksi Baju / Pakaian Buatan (merah, biru, ungu, oranye terang)
+            $isRedShirt    = ($r > 160 && $g < 70 && $b < 70);
+            $isBlueShirt   = ($b > 130 && $b > $r + 30 && $b > $g + 30);
+            $isPurpleShirt = ($r > 100 && $b > 100 && $g < 80 && abs($r - $b) < 50);
+            $isOrangeShirt = ($r > 190 && $g > 75 && $g < 150 && $b < 50);
             if ($isRedShirt || $isBlueShirt || $isPurpleShirt || $isOrangeShirt) {
                 $artificialClothingCount++;
             }
             
-            // 3. Cek piksel latar belakang dokumen/screenshot/UI solid (putih & hitam pekat)
-            if (($r > 220 && $g > 220 && $b > 220) || ($r < 25 && $g < 25 && $b < 25)) {
+            // 3. Background dokumen / screenshot / latar polos (hitam/putih solid)
+            if (($r > 225 && $g > 225 && $b > 225) || ($r < 20 && $g < 20 && $b < 20)) {
                 $documentBgCount++;
             }
             
-            // 4. Biru langit / biru buatan / abu non-padi yang dominan
-            $isBlueSky  = ($b > $r + 15 && $b > $g + 10 && $b > 90);
+            // 4. Biru langit / biru buatan
+            $isBlueSky = ($b > $r + 20 && $b > $g + 15 && $b > 100);
             if ($isBlueSky) $blueNonPadiCount++;
             
-            // 5. Abu-abu netral (tembok, beton, aspal, dll)
-            $isGray = (abs($r - $g) < 18 && abs($g - $b) < 18 && abs($r - $b) < 18 && $r > 40 && $r < 220);
+            // 5. Abu-abu netral (beton, tembok, aspal)
+            $isGray = (abs($r - $g) < 15 && abs($g - $b) < 15 && abs($r - $b) < 15 && $r > 40 && $r < 210);
             if ($isGray) $grayNonPadiCount++;
             
-            // 6. Karakteristik Tanaman Padi (segala fase: Hijau, Kuning Matang, Kering/Jerami, Sawah)
-            $isGreenPadi  = ($g > $r + 5 && $g > $b + 8 && $g > 40);
-            $isYellowPadi = ($r > 100 && $g > 90 && $b < 110 && ($r - $b) > 20 && ($g - $b) > 10 && abs($r - $g) < 70);
-            $isDryPadi    = ($r > 70 && $g > 58 && $b < 90 && $r >= $g - 15 && ($r - $b) > 12);
-            $isSawahMud   = ($r > 50 && $g > 42 && $b < 70 && ($r - $b) > 10);
+            // 6. Karakteristik Tanaman Padi Asli (daun hijau segar, gabah kuning, batang kering, sawah)
+            $isGreenPadi  = ($g > $r + 12 && $g > $b + 25 && $g > 45 && $b < 150); // Memisahkan hijau daun padi dari tembok hijau
+            $isYellowPadi = ($r > 110 && $g > 95 && $b < 100 && ($r - $b) > 25 && ($g - $b) > 15 && abs($r - $g) < 60);
+            $isDryPadi    = ($r > 80 && $g > 65 && $b < 95 && $r >= $g && ($r - $b) > 18);
             
-            if ($isGreenPadi || $isYellowPadi || $isDryPadi || $isSawahMud) {
+            if ($isGreenPadi || $isYellowPadi || $isDryPadi) {
                 $riceColorCount++;
             }
         }
@@ -361,29 +356,27 @@ function isRicePlantImage($imagePath) {
     $grayRatio     = $grayNonPadiCount / $totalSamples;
     $riceRatio     = $riceColorCount / $totalSamples;
     
-    // A. TOLAK jika dominan kulit manusia (wajah / tubuh)
-    // Catatan: Jika riceRatio >= 0.08 (ada konteks tanaman padi/sawah), tanah/jalan coklat di sawah TIDAK dianggap kulit manusia
-    $skinThreshold = ($riceRatio >= 0.08) ? 0.35 : 0.12;
-    if ($skinRatio > $skinThreshold) {
+    // A. TOLAK jika terdeteksi kulit manusia (wajah / tubuh / tangan / selfie webcam) > 3.0% piksel
+    if ($skinRatio >= 0.030) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia, bukan tanaman padi.'];
     }
     
-    // B. TOLAK jika ada pakaian buatan manusia cukup banyak (>15% piksel) jika tidak ada padi
-    if ($clothingRatio > 0.15 && $riceRatio < 0.10) {
+    // B. TOLAK jika ada pakaian buatan manusia > 10% piksel
+    if ($clothingRatio > 0.10 && $riceRatio < 0.10) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian/baju), bukan tanaman padi.'];
     }
     
-    // C. TOLAK jika > 65% background dokumen/UI/screenshot (putih/hitam solid)
-    if ($docRatio > 0.65) {
+    // C. TOLAK jika > 60% background dokumen/UI/screenshot (putih/hitam solid)
+    if ($docRatio > 0.60) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos, bukan tanaman padi.'];
     }
     
-    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 70% dan padi < 5%)
-    if (($blueRatio + $grayRatio) > 0.70 && $riceRatio < 0.05) {
+    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 65% dan padi < 8%)
+    if (($blueRatio + $grayRatio) > 0.65 && $riceRatio < 0.08) {
         return ['valid' => false, 'reason' => 'Gambar didominasi langit atau objek buatan, bukan tanaman padi.'];
     }
     
-    // E. HARUS memiliki minimal 8% piksel bernuansa tanaman padi / sawah (daun/batang/gabah/tanah sawah)
+    // E. HARUS memiliki minimal 8% piksel bernuansa tanaman padi / sawah (daun/batang/gabah)
     if ($riceRatio < 0.08) {
         return ['valid' => false, 'reason' => 'Gambar tidak terdeteksi mengandung tanaman padi (tidak ada daun, batang, gabah, atau sawah).'];
     }
