@@ -42,15 +42,10 @@ class DetectionDetailSheet extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              onDelete(detection['id']);
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Close sheet
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Riwayat deteksi berhasil dihapus.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              final idToDelete = detection['id'];
+              Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog konfirmasi
+              Navigator.of(context, rootNavigator: true).pop(); // Tutup modal sheet detail
+              onDelete(idToDelete); // Panggil fungsi hapus setelah dialog/sheet tertutup bersih
             },
             style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
             child: const Text('Hapus'),

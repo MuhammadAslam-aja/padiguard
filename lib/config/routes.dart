@@ -129,18 +129,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 2. If logged in, prevent visiting login/register/onboarding/splash
+      // 2. If logged in, prevent visiting login/register/onboarding/splash/root
       final role = authState.user?.role ?? 'petani';
-      if (loc == '/login' || loc == '/register' || loc == '/onboarding' || loc == '/splash') {
+      if (loc == '/' || loc == '/login' || loc == '/register' || loc == '/onboarding' || loc == '/splash') {
         return role == 'admin' ? '/admin/dashboard' : '/petani/home';
       }
 
-      // 3. Prevent farmers from accessing admin areas
+      // 3. Redirect base shell paths (/petani, /petani/, /admin, /admin/) to default home/dashboard pages
+      if (loc == '/petani' || loc == '/petani/') {
+        return role == 'admin' ? '/admin/dashboard' : '/petani/home';
+      }
+      if (loc == '/admin' || loc == '/admin/') {
+        return role == 'admin' ? '/admin/dashboard' : '/petani/home';
+      }
+
+      // 4. Prevent farmers from accessing admin areas
       if (loc.startsWith('/admin') && role != 'admin') {
         return '/petani/home';
       }
 
-      // 4. Prevent admins from accessing farmer areas
+      // 5. Prevent admins from accessing farmer areas
       if (loc.startsWith('/petani') && role != 'petani') {
         return '/admin/dashboard';
       }

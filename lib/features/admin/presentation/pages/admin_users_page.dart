@@ -238,15 +238,13 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
             TextButton(
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
+                final name = nameController.text.trim();
+                final email = emailController.text.trim();
+                final pass = passwordController.text;
+                final role = selectedRole;
                 
-                _addUser(
-                  nameController.text.trim(),
-                  emailController.text.trim(),
-                  passwordController.text,
-                  selectedRole,
-                );
-                
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pop();
+                _addUser(name, email, pass, role);
               },
               child: const Text('Tambah'),
             ),
@@ -325,16 +323,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
             TextButton(
               onPressed: () {
                 if (!formKey.currentState!.validate()) return;
+                final userId = user['id'];
+                final name = nameController.text.trim();
+                final email = emailController.text.trim();
+                final role = selectedRole;
+                final pass = passwordController.text;
                 
-                _editUser(
-                  user['id'],
-                  nameController.text.trim(),
-                  emailController.text.trim(),
-                  selectedRole,
-                  passwordController.text,
-                );
-                
-                Navigator.pop(context);
+                Navigator.of(context, rootNavigator: true).pop();
+                _editUser(userId, name, email, role, pass);
               },
               child: const Text('Simpan'),
             ),
@@ -354,8 +350,9 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
           TextButton(
             onPressed: () {
-              _deleteUser(user['id']);
-              Navigator.pop(context);
+              final userId = user['id'];
+              Navigator.of(context, rootNavigator: true).pop();
+              _deleteUser(userId);
             },
             style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
             child: const Text('Hapus'),
