@@ -8,15 +8,18 @@ class AppConstants {
   static const bool useMockApi = false; // Set to true to run offline mock simulator
   static const String defaultBaseUrl = 'https://tirza-padiguard-production.up.railway.app/api/';
 
-  /// Base URL dinamis: otomatis menyesuaikan domain/IP/Ngrok saat diakses lewat web
+  /// Base URL dinamis: otomatis menyesuaikan domain/IP/Ngrok/Railway saat diakses lewat web
   static String get baseUrl {
     if (kIsWeb) {
       final uri = Uri.base;
       final host = uri.host;
       if (host.isNotEmpty) {
         final scheme = uri.scheme;
-        // Backend Laragon Apache selalu berada di port HTTP (80) / HTTPS (443)
-        return '$scheme://$host/padibackend/backend/';
+        final port = uri.hasPort ? ':${uri.port}' : '';
+        if (host == 'localhost' || host == '127.0.0.1') {
+          return '$scheme://$host$port/padibackend/backend/api/';
+        }
+        return '$scheme://$host$port/api/';
       }
     }
     return defaultBaseUrl;
