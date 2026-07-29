@@ -602,8 +602,21 @@ $decodedUri = rawurldecode($requestUri);
 $requestPath = strtok($decodedUri, '?');
 // Jika request bukan untuk /api, layani Flutter Web UI dari folder web_app
 if (stripos($requestPath, '/api') === false) {
-    $webDir = __DIR__ . '/../web_app';
-    if (file_exists($webDir)) {
+    $candidateWebDirs = [
+        __DIR__ . '/web_app',
+        __DIR__ . '/../web_app',
+        '/app/web_app',
+        '/app/backend/web_app'
+    ];
+    $webDir = null;
+    foreach ($candidateWebDirs as $candidate) {
+        if (file_exists($candidate) && is_dir($candidate) && file_exists($candidate . '/index.html')) {
+            $webDir = $candidate;
+            break;
+        }
+    }
+
+    if ($webDir) {
         $file = ltrim($requestPath, '/');
         $filePath = $webDir . '/' . $file;
         
