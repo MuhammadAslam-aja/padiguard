@@ -30,12 +30,13 @@ class _DetectionPageState extends ConsumerState<DetectionPage> {
   Map<String, dynamic>? _detectionResult;
   String? _errorMessage;
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _pickImage(ImageSource source, {CameraDevice preferredCamera = CameraDevice.rear}) async {
     try {
       final XFile? file = kIsWeb
-          ? await _picker.pickImage(source: source)
+          ? await _picker.pickImage(source: source, preferredCameraDevice: preferredCamera)
           : await _picker.pickImage(
               source: source,
+              preferredCameraDevice: preferredCamera,
               imageQuality: 85,
               maxWidth: 1024,
             );
@@ -57,6 +58,51 @@ class _DetectionPageState extends ConsumerState<DetectionPage> {
         _errorMessage = 'Gagal mengakses media: ${e.toString()}';
       });
     }
+  }
+
+  void _showCameraOptions(BuildContext context) {
+    if (kIsWeb) {
+      _openWebCamera();
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pilih Kamera',
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_rear, color: Color(0xFF4CAF50)),
+              title: const Text('Kamera Belakang (Utama)'),
+              subtitle: const Text('Direkomendasikan untuk memfoto sawah & tanaman padi'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera, preferredCamera: CameraDevice.rear);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_front, color: Colors.amber),
+              title: const Text('Kamera Depan'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera, preferredCamera: CameraDevice.front);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Membuka dialog kamera web / browser secara live.
@@ -393,13 +439,7 @@ class _DetectionPageState extends ConsumerState<DetectionPage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (kIsWeb) {
-                          _openWebCamera();
-                        } else {
-                          _pickImage(ImageSource.camera);
-                        }
-                      },
+                      onPressed: () => _showCameraOptions(context),
                       icon: const Icon(Icons.camera_alt),
                       label: const Text('Kamera'),
                       style: ElevatedButton.styleFrom(

@@ -132,6 +132,7 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
   bool _isReady = false;
   bool _hasError = false;
   bool _isWaitingPermission = true; // true saat menunggu izin browser
+  bool _isFrontCamera = false; // false = kamera belakang (environment), true = kamera depan (user)
   String _errorMsg = '';
   late final String _viewId;
 
@@ -153,8 +154,20 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
     });
   }
 
+  void _toggleCameraFacing() {
+    if (!_isReady) return;
+    setState(() {
+      _isFrontCamera = !_isFrontCamera;
+      _isReady = false;
+      _hasError = false;
+      _isWaitingPermission = true;
+    });
+    _startCamera();
+  }
+
   Future<void> _startCamera() async {
     try {
+      _stopCamera();
       if (html.window.navigator.mediaDevices == null) {
         throw Exception('MediaDevices API tidak tersedia.');
       }
@@ -162,8 +175,11 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
       // Tampilkan status: menunggu izin
       if (mounted) setState(() => _isWaitingPermission = true);
 
+      final String facingMode = _isFrontCamera ? 'user' : 'environment';
+
       final stream = await html.window.navigator.mediaDevices!.getUserMedia({
         'video': {
+          'facingMode': facingMode,
           'width': {'ideal': 1280},
           'height': {'ideal': 720},
         },
@@ -192,20 +208,14 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
         (int id) => video,
       );
 
-      // Langsung set isReady=true agar HtmlElementView dirender ke DOM.
-      // Video akan autoplay setelah elemen masuk ke DOM (karena autoplay=true).
-      // Jangan await onLoadedMetadata di sini — video belum di-DOM, jadi tidak akan fire!
       if (mounted) {
         setState(() => _isReady = true);
       }
 
-      // Play dilakukan setelah satu frame render selesai
       await Future.delayed(const Duration(milliseconds: 100));
       try {
         await video.play();
-      } catch (_) {
-        // autoplay mungkin sudah berjalan, abaikan error
-      }
+      } catch (_) {}
     } catch (e) {
       if (mounted) {
         String msg;
@@ -213,7 +223,7 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
         if (errStr.contains('NotAllowedError') || errStr.contains('Permission')) {
           msg = 'Izin kamera ditolak.\n\nKlik ikon kunci/kamera di address bar browser lalu izinkan akses kamera, kemudian coba lagi.';
         } else if (errStr.contains('NotFoundError') || errStr.contains('DevicesNotFound')) {
-          msg = 'Kamera tidak ditemukan.\n\nPastikan kamera terhubung dan driver terinstal.';
+          msg = 'Kamera ${_isFrontCamera ? "depan" : "belakang"} tidak ditemukan.\n\nTekan tombol ganti kamera atau pastikan driver kamera terinstal.';
         } else if (errStr.contains('NotReadableError')) {
           msg = 'Kamera sedang digunakan aplikasi lain.\n\nTutup aplikasi lain yang menggunakan kamera.';
         } else if (errStr.contains('MediaDevices') || errStr.contains('mediaDevices')) {
@@ -301,11 +311,11 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.camera_alt, color: Color(0xFF4CAF50), size: 22),
-                      SizedBox(width: 8),
-                      Text(
+                      const Icon(Icons.camera_alt, color: Color(0xFF4CAF50), size: 22),
+                      const SizedBox(width: 8),
+                      const Text(
                         'Kamera',
                         style: TextStyle(
                           color: Colors.white,
@@ -313,14 +323,46 @@ class _WebCameraDialogState extends State<_WebCameraDialog> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _isFrontCamera
+                              ? Colors.amber.withOpacity(0.2)
+                              : const Color(0xFF4CAF50).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _isFrontCamera
+                                ? Colors.amber.withOpacity(0.5)
+                                : const Color(0xFF4CAF50).withOpacity(0.5),
+                          ),
+                        ),
+                        child: Text(
+                          _isFrontCamera ? 'Kamera Depan' : 'Kamera Belakang',
+                          style: TextStyle(
+                            color: _isFrontCamera ? Colors.amber : const Color(0xFF81C784),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54),
-                    onPressed: () {
-                      _stopCamera();
-                      Navigator.of(context).pop(null);
-                    },
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.flip_camera_ios, color: Color(0xFF81C784)),
+                        tooltip: _isFrontCamera ? 'Ganti ke Kamera Belakang' : 'Ganti ke Kamera Depan',
+                        onPressed: _toggleCameraFacing,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white54),
+                        onPressed: () {
+                          _stopCamera();
+                          Navigator.of(context).pop(null);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
