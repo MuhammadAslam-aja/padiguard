@@ -2,17 +2,39 @@
 // connection.php - Mengelola koneksi database MySQL PDO dan inisialisasi schema secara otomatis
 // Mendukung Railway (environment variables) dan Laragon lokal (fallback)
 
-// Deteksi apakah berjalan di Railway (production) atau lokal
-$isRailway = !empty(getenv('MYSQLHOST')) || !empty(getenv('DB_HOST'));
+function getEnvVar($name, $default = '') {
+    if (isset($_ENV[$name]) && $_ENV[$name] !== '') return $_ENV[$name];
+    if (isset($_SERVER[$name]) && $_SERVER[$name] !== '') return $_SERVER[$name];
+    $val = getenv($name);
+    if ($val !== false && $val !== '') return $val;
+    return $default;
+}
+
+$mysqlUrl = getEnvVar('MYSQL_URL') ?: getEnvVar('DATABASE_URL');
+$host     = getEnvVar('MYSQLHOST') ?: getEnvVar('DB_HOST');
+$port     = getEnvVar('MYSQLPORT') ?: getEnvVar('DB_PORT', '3306');
+$db       = getEnvVar('MYSQLDATABASE') ?: getEnvVar('DB_NAME');
+$user     = getEnvVar('MYSQLUSER') ?: getEnvVar('DB_USER');
+$pass     = getEnvVar('MYSQLPASSWORD') ?: getEnvVar('DB_PASS');
+
+if (!empty($mysqlUrl)) {
+    $parsed = parse_url($mysqlUrl);
+    if ($parsed) {
+        if (!empty($parsed['host'])) $host = $parsed['host'];
+        if (!empty($parsed['port'])) $port = $parsed['port'];
+        if (!empty($parsed['user'])) $user = $parsed['user'];
+        if (isset($parsed['pass']))  $pass = $parsed['pass'];
+        if (!empty($parsed['path'])) $db   = ltrim($parsed['path'], '/');
+    }
+}
+
+$isRailway = !empty(getEnvVar('RAILWAY_ENVIRONMENT')) || !empty($mysqlUrl) || (!empty($host) && $host !== 'localhost');
 
 if ($isRailway) {
     // === RAILWAY PRODUCTION ===
-    // Railway MySQL plugin menyediakan variabel: MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER, MYSQLPASSWORD
-    $host    = getenv('MYSQLHOST')     ?: getenv('DB_HOST')  ?: 'localhost';
-    $port    = getenv('MYSQLPORT')     ?: getenv('DB_PORT')  ?: '3306';
-    $db      = getenv('MYSQLDATABASE') ?: getenv('DB_NAME')  ?: 'railway';
-    $user    = getenv('MYSQLUSER')     ?: getenv('DB_USER')  ?: 'root';
-    $pass    = getenv('MYSQLPASSWORD') ?: getenv('DB_PASS')  ?: '';
+    $host = !empty($host) ? $host : 'mysql.railway.internal';
+    $db   = !empty($db)   ? $db   : 'railway';
+    $user = !empty($user) ? $user : 'root';
     $charset = 'utf8mb4';
     $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 } else {
