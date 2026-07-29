@@ -17,8 +17,10 @@ WORKDIR /app
 # Copy seluruh source code
 COPY . /app
 
-# Expose port (Railway akan memberikan variabel $PORT dinamis)
+# Beri izin eksekusi script entrypoint
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 8080
 
-# Gunakan shell form agar variabel $PORT dari Railway terekspansi dengan benar
-CMD ["sh", "-c", "php -S 0.0.0.0:${PORT:-8080} -t backend"]
+# Gunakan ENTRYPOINT agar selalu menjalankan entrypoint.sh bahkan jika startCommand di-override
+ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
