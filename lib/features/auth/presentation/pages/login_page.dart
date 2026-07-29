@@ -71,6 +71,241 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  void _showForgotPasswordDialog(BuildContext context) {
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+    String? dialogError;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+
+          Future<void> handleResetPassword() async {
+            if (!formKey.currentState!.validate()) return;
+            
+            setDialogState(() {
+              isSubmitting = true;
+              dialogError = null;
+            });
+
+            final email = emailController.text.trim();
+            final newPassword = newPasswordController.text;
+
+            try {
+              final dioClient = ref.read(dioClientProvider);
+              final response = await dioClient.dio.post(
+                'api/auth/reset-password',
+                data: {
+                  'email': email,
+                  'newPassword': newPassword,
+                },
+              );
+
+              dynamic resData = response.data;
+              if (resData is String) {
+                try { resData = jsonDecode(resData); } catch (_) {}
+              }
+
+              if ((response.statusCode == 200 || response.statusCode == 201) &&
+                  resData is Map &&
+                  resData['success'] == true) {
+                
+                if (mounted) {
+                  Navigator.of(dialogContext, rootNavigator: true).pop();
+                  setState(() {
+                    _emailController.text = email;
+                    _passwordController.clear();
+                  });
+
+                  ScaffoldMessenger.of(rootNavigatorKey.currentContext ?? context).showSnackBar(
+                    SnackBar(
+                      content: Text(resData['message'] ?? 'Password berhasil diperbarui! Silakan login.'),
+                      backgroundColor: AppTheme.successColor,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              } else {
+                final msg = (resData is Map && resData['message'] != null)
+                    ? resData['message'].toString()
+                    : 'Gagal mereset password.';
+                setDialogState(() {
+                  isSubmitting = false;
+                  dialogError = msg;
+                });
+              }
+            } catch (e) {
+              String msg = 'Gagal terhubung ke server.';
+              if (e is DioException) {
+                final resData = e.response?.data;
+                if (resData is Map && resData['message'] != null) {
+                  msg = resData['message'].toString();
+                } else if (e.response?.statusCode == 404) {
+                  msg = 'Email tidak terdaftar di sistem PadiGuard.';
+                }
+              }
+              setDialogState(() {
+                isSubmitting = false;
+                dialogError = msg;
+              });
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.lock_reset, color: Color(0xFF4CAF50), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Reset Password',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : AppTheme.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Masukkan email terdaftar Anda dan buat password baru.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.black60,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (dialogError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                dialogError!,
+                                style: const TextStyle(color: AppTheme.errorColor, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email Terdaftar',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) return 'Email wajib diisi';
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
+                          return 'Format email tidak valid';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: newPasswordController,
+                      obscureText: obscureNew,
+                      decoration: InputDecoration(
+                        labelText: 'Password Baru',
+                        prefixIcon: const Icon(Icons.lock_outlined),
+                        suffixIcon: IconButton(
+                          icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                          onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Password baru wajib diisi';
+                        if (val.length < 6) return 'Password minimal 6 karakter';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: confirmPasswordController,
+                      obscureText: obscureConfirm,
+                      decoration: InputDecoration(
+                        labelText: 'Konfirmasi Password Baru',
+                        prefixIcon: const Icon(Icons.lock_clock_outlined),
+                        suffixIcon: IconButton(
+                          icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                          onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Konfirmasi password wajib diisi';
+                        if (val != newPasswordController.text) return 'Password tidak cocok';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting ? null : () => Navigator.of(dialogContext, rootNavigator: true).pop(),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting ? null : handleResetPassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B5E20),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Reset Password'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -270,9 +505,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             ],
                           ),
                           TextButton(
-                            onPressed: () {
-                              AppNotification.forgotPassword(context);
-                            },
+                            onPressed: () => _showForgotPasswordDialog(context),
                             child: Text(
                               'Lupa Password?',
                               style: GoogleFonts.poppins(

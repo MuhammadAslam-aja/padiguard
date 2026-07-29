@@ -753,6 +753,38 @@ if ($path === '/auth/register' && $method === 'POST') {
     sendResponse(true, ['message' => 'Registrasi berhasil. Silakan login.']);
 }
 
+// Route: /auth/reset-password (PUBLIC - Reset Password jika Lupa)
+if ($path === '/auth/reset-password' && $method === 'POST') {
+    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
+    $newPassword = isset($inputData['newPassword']) ? $inputData['newPassword'] : (isset($inputData['password']) ? $inputData['password'] : '');
+    
+    if (empty($email) || empty($newPassword)) {
+        sendResponse(false, ['message' => 'Email dan password baru harus diisi.'], 400);
+    }
+
+    if (strlen($newPassword) < 6) {
+        sendResponse(false, ['message' => 'Password minimal harus 6 karakter.'], 400);
+    }
+    
+    // Cek apakah email terdaftar
+    $stmt = $pdo->prepare("SELECT * FROM `users` WHERE `email` = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+    
+    if (!$user) {
+        sendResponse(false, ['message' => 'Email tidak terdaftar di sistem PadiGuard.'], 404);
+    }
+    
+    $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+    $updateStmt = $pdo->prepare("UPDATE `users` SET `password` = ? WHERE `id` = ?");
+    $updateStmt->execute([$hashedPassword, $user['id']]);
+    
+    sendResponse(true, [
+        'message' => 'Password berhasil diperbarui! Silakan login dengan password baru Anda.',
+        'email' => $email
+    ]);
+}
+
 // Route: /image (Serve uploaded images with CORS headers)
 if ($path === '/image' && $method === 'GET') {
     $file = isset($_GET['file']) ? basename($_GET['file']) : '';
