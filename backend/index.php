@@ -639,18 +639,17 @@ if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-// 4. Parsing Request URI
-$scriptName = $_SERVER['SCRIPT_NAME']; // "/KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI/backend/index.php"
+// 4. Parsing Request URI (Kebal terhadap prefix domain/path seperti /padibackend/backend/api/ maupun /api/)
 $requestUri = $_SERVER['REQUEST_URI'];
 $decodedUri = rawurldecode($requestUri);
-$scriptDir = dirname($scriptName);
-$basePath = rtrim(str_replace('\\', '/', $scriptDir), '/') . '/api'; // Base API Path
-// Gunakan str_ireplace agar case-insensitive (mengatasi casing URL dari browser/Windows)
-$path = str_ireplace($basePath, '', strtok($decodedUri, '?'));
-// Normalisasi: hapus slash di akhir dan duplikasi slash
+$cleanUri   = strtok($decodedUri, '?');
+
+$path = '/';
+if (preg_match('#/api(/.*)?$#i', $cleanUri, $matches)) {
+    $path = !empty($matches[1]) ? $matches[1] : '/';
+}
 $path = rtrim($path, '/');
 $path = preg_replace('#/+#', '/', $path);
-// Pastikan path selalu dimulai dengan slash '/' agar konsisten dengan route matching
 if (empty($path) || $path[0] !== '/') {
     $path = '/' . $path;
 }
