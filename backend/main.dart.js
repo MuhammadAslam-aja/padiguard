@@ -102936,7 +102936,7 @@ A.a5G.prototype={}
 A.xI.prototype={
 G(a){var s=null,r=this.c
 r=r==null?s:"GoException: "+r.a
-return A.qN(!0,A.dm(A.aY(A.b([B.a5D,B.aB,A.V(r==null?"page not found":r,s,s,s,s,s,s,s),B.aB,new A.K_(new A.agU(a),B.a5o,s)],t.p),B.p,B.aX,B.l),s,s),B.au,!0)}}
+return A.qN(!0,A.dm(A.aY(A.b([B.a5C,B.aB,A.V(r==null?"page not found":r,s,s,s,s,s,s,s),B.aB,new A.K_(new A.agU(a),B.a5o,s)],t.p),B.p,B.aX,B.l),s,s),B.au,!0)}}
 A.agU.prototype={
 $0(){return A.f9(this.a).hW(0,"/",null)},
 $S:0}
@@ -102986,7 +102986,7 @@ A.yt.prototype={
 G(a){var s=null,r=A.nl(s,s,s,s,s,B.a62),q=this.c
 q=q==null?s:"GoException: "+q.a
 if(q==null)q="page not found"
-return A.hd(r,s,A.dm(A.aY(A.b([new A.HO(q,s),A.da(B.a5C,new A.anQ(a),s)],t.p),B.p,B.aX,B.l),s,s),s,s)}}
+return A.hd(r,s,A.dm(A.aY(A.b([new A.HO(q,s),A.da(B.a5B,new A.anQ(a),s)],t.p),B.p,B.aX,B.l),s,s),s,s)}}
 A.anQ.prototype={
 $0(){return A.f9(this.a).hW(0,"/",null)},
 $S:0}
@@ -103432,17 +103432,17 @@ this.e=null},
 l(){this.Ck()
 this.aB()},
 G(a){var s=this,r=null,q=A.aS(20),p=A.aS(20),o=A.dX(B.qp,1),n=B.d.az(127.5),m=A.b([new A.bD(0,B.Q,A.ac(n,B.k.q()>>>16&255,B.k.q()>>>8&255,B.k.q()&255),B.jJ,32)],t.V),l=s.x?A.ac(51,B.d1.q()>>>16&255,B.d1.q()>>>8&255,B.d1.q()&255):A.ac(51,B.a6.q()>>>16&255,B.a6.q()>>>8&255,B.a6.q()&255),k=A.aS(10),j=A.dX(s.x?A.ac(n,B.d1.q()>>>16&255,B.d1.q()>>>8&255,B.d1.q()&255):A.ac(n,B.a6.q()>>>16&255,B.a6.q()>>>8&255,B.a6.q()&255),1),i=s.x,h=i?"Kamera Depan":"Kamera Belakang",g=t.p
-k=A.bB(A.b([B.Ok,B.bp,B.a5j,B.oj,A.b7(r,A.V(h,r,r,r,A.bn(r,r,i?B.d1:B.ci,r,r,r,r,r,r,r,r,11,r,r,B.r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r),B.o,r,r,new A.bd(l,r,j,k,r,r,B.C),r,r,r,r,B.Mk,r,r,r)],g),B.p,B.n,B.l,0)
+k=A.bB(A.b([B.Ok,B.bp,B.a5k,B.oj,A.b7(r,A.V(h,r,r,r,A.bn(r,r,i?B.d1:B.ci,r,r,r,r,r,r,r,r,11,r,r,B.r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r),B.o,r,r,new A.bd(l,r,j,k,r,r,B.C),r,r,r,r,B.Mk,r,r,r)],g),B.p,B.n,B.l,0)
 l=s.x?"Ganti ke Kamera Belakang":"Ganti ke Kamera Depan"
 l=A.bB(A.b([k,A.en(r,r,B.OE,r,r,s.gauq(),r,r,l)],g),B.p,B.aY,B.l,0)
 k=A.aS(12)
-if(s.r)j=A.dm(new A.be(B.Mh,A.aY(A.b([A.b7(r,B.Om,B.o,r,r,new A.bd(A.ac(B.d.az(25.5),B.ns.q()>>>16&255,B.ns.q()>>>8&255,B.ns.q()&255),r,r,r,r,r,B.bX),r,r,r,r,B.cY,r,r,r),B.aB,A.V(s.y,r,r,r,B.a24,B.c9,r,r),B.bq,A.xE(B.NQ,B.a5F,new A.aNf(s),A.jm(r,r,B.a9,r,r,r,r,r,r,B.f,r,r,r,r,r,r,r,r,r,r))],g),B.p,B.aX,B.l),r),r,r)
+if(s.r)j=A.dm(new A.be(B.Mh,A.aY(A.b([A.b7(r,B.Om,B.o,r,r,new A.bd(A.ac(B.d.az(25.5),B.ns.q()>>>16&255,B.ns.q()>>>8&255,B.ns.q()&255),r,r,r,r,r,B.bX),r,r,r,r,B.cY,r,r,r),B.aB,A.V(s.y,r,r,r,B.a24,B.c9,r,r),B.bq,A.xE(B.NQ,B.a5E,new A.aNf(s),A.jm(r,r,B.a9,r,r,r,r,r,r,B.f,r,r,r,r,r,r,r,r,r,r))],g),B.p,B.aX,B.l),r),r,r)
 else if(s.f){j=s.z
-j=new A.EY(j,r,B.Cu,new A.d2(j,t.kK))}else{j=A.b([B.I9,B.bq,B.a57,B.aB],g)
+j=new A.EY(j,r,B.Cu,new A.d2(j,t.kK))}else{j=A.b([B.I9,B.bq,B.a58,B.aB],g)
 if(s.w){i=A.ac(B.d.az(76.5),B.a9.q()>>>16&255,B.a9.q()>>>8&255,B.a9.q()&255)
 h=A.aS(10)
 B.b.M(j,A.b([A.b7(r,B.Kv,B.o,r,r,new A.bd(i,r,A.dX(A.ac(102,B.a6.q()>>>16&255,B.a6.q()>>>8&255,B.a6.q()&255),1),h,r,r,B.C),r,r,r,r,B.qZ,r,r,r),B.aR,B.Ya],g))}j=A.dm(new A.be(B.iP,A.aY(j,B.p,B.aX,B.l),r),r,r)}k=A.b7(r,j,B.b8,r,r,new A.bd(B.M,r,r,k,r,r,B.C),r,380,r,B.iO,r,r,r,r)
-j=A.apq(B.NM,B.a5e,new A.aNg(s,a),A.V4(r,r,r,r,r,r,r,r,r,r,r,r,B.Mb,r,new A.c_(A.aS(12),B.q),B.Fp,r,r,r,r))
+j=A.apq(B.NM,B.a5f,new A.aNg(s,a),A.V4(r,r,r,r,r,r,r,r,r,r,r,r,B.Mb,r,new A.c_(A.aS(12),B.q),B.Fp,r,r,r,r))
 i=s.f?s.gafH():r
 h=A.aS(12)
 return A.aRt(r,B.x,A.b7(r,A.aY(A.b([new A.be(B.Mc,l,r),k,new A.be(B.M8,A.bB(A.b([j,B.ej,A.cv(A.xE(B.Ot,B.a63,i,A.jm(r,r,B.a9,A.ac(n,B.bu.q()>>>16&255,B.bu.q()>>>8&255,B.bu.q()&255),B.K9,r,0,r,r,B.f,r,r,B.qY,r,new A.c_(h,B.q),r,r,r,r,r)),1)],g),B.p,B.n,B.l,0),r)],g),B.p,B.n,B.ah),B.o,r,B.FM,new A.bd(B.cy,r,o,p,m,r,B.C),r,r,r,r,r,r,r,600),r,r,r,r,B.D1,r,new A.c_(q,B.q),r)}}
@@ -103581,7 +103581,7 @@ g.gde().qF($.fm(),new A.azT(g))
 s=A.Q(a).ax.a===B.T
 r=A.bt(a,f,t.w).w.a.a>=800
 q=t.p
-p=A.aY(A.b([B.a5L,A.V("by Tirza Marsena (6150101220009)",f,f,f,A.bn(f,f,B.al,f,f,f,f,f,f,f,f,10,f,f,f,f,f,!0,f,f,f,f,f,f,f,f),f,f,f)],q),B.O,B.n,B.l)
+p=A.aY(A.b([B.a5K,A.V("by Tirza Marsena (6150101220009)",f,f,f,A.bn(f,f,B.al,f,f,f,f,f,f,f,f,10,f,f,f,f,f,!0,f,f,f,f,f,f,f,f),f,f,f)],q),B.O,B.n,B.l)
 p=A.nl(A.b([A.en(f,f,B.rS,f,f,new A.azU(g),f,f,f),A.en(f,f,B.mV,f,f,new A.azV(g,a),f,f,"Keluar")],q),f,f,f,f,p)
 if(g.y)q=B.fG
 else{o=A.V("Statistik Sistem",f,f,f,A.jb().$2$fontSize$fontWeight(18,B.r),f,f,f)
@@ -103947,7 +103947,7 @@ return A.C($async$C8,r)},
 agb(){this.K(new A.aA4(this))},
 G(a){var s,r,q,p,o=this,n=null,m=o.x,l=A.Z(m).h("aH<1>"),k=A.a5(new A.aH(m,new A.aAf(o),l),l.h("p.E"))
 l=t.p
-s=A.aY(A.b([B.a5E,A.V("by Tirza Marsena (6150101220009)",n,n,n,A.bn(n,n,B.al,n,n,n,n,n,n,n,n,10,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),n,n,n)],l),B.O,B.n,B.l)
+s=A.aY(A.b([B.a5D,A.V("by Tirza Marsena (6150101220009)",n,n,n,A.bn(n,n,B.al,n,n,n,n,n,n,n,n,10,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),n,n,n)],l),B.O,B.n,B.l)
 r=A.b([],l)
 if(o.as!=null||o.Q!=="Semua"||o.z.length!==0)r.push(A.en(n,n,B.NR,n,n,o.gaga(),n,n,n))
 s=A.nl(r,n,n,n,n,s)
@@ -104294,7 +104294,7 @@ return new A.oF(new A.aAu(s.a,s.b,s.c,s.d,s.e,s.f),null)},
 $S:147}
 A.aAu.prototype={
 $2(a,b){var s=this,r=null,q=A.V("Tambah User Baru",r,r,r,A.b3().$1$fontWeight(B.r),r,r,r),p=s.c,o=s.d,n=s.e,m=s.f,l=s.a,k=t.p,j=A.mO(A.xP(r,A.aY(A.b([A.hh(!1,o,B.n_,r,r,!1,r,r,new A.aAo()),B.aR,A.hh(!1,n,B.t_,r,B.ff,!1,r,r,new A.aAp()),B.aR,A.hh(!1,m,B.Pe,r,r,!0,r,r,new A.aAq()),B.aR,A.aRF(B.rZ,B.tk,new A.aAr(l,b),l.a,t.N)],k),B.p,B.n,B.ah),p),r)
-return A.iA(A.b([A.da(B.bT,new A.aAs(a),r),A.da(B.a58,new A.aAt(l,s.b,p,o,n,m,a),r)],k),r,j,r,q)},
+return A.iA(A.b([A.da(B.bT,new A.aAs(a),r),A.da(B.a59,new A.aAt(l,s.b,p,o,n,m,a),r)],k),r,j,r,q)},
 $S:148}
 A.aAo.prototype={
 $1(a){var s=B.c.c2(a)
@@ -105070,7 +105070,7 @@ l.toString
 k=j.c
 A.jY(l,k==null?"Registrasi gagal.":k,"Registrasi Gagal",B.jF)}case 1:return A.B(q,r)}})
 return A.C($async$Co,r)},
-G(a0){var s,r,q,p,o,n=this,m=null,l=n.gde().m4($.ix(),t.FB),k=A.Q(a0).ax.a===B.T,j=t.p,i=A.nl(m,m,m,A.en(m,m,B.Od,m,m,new A.aJH(a0),m,m,m),m,A.aY(A.b([B.a5Q,A.V("by Tirza Marsena (6150101220009)",m,m,m,A.bn(m,m,B.al,m,m,m,m,m,m,m,m,10,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m,m)],j),B.O,B.n,B.l)),h=A.V("Gabung PadiGuard",m,m,m,A.jb().$3$color$fontSize$fontWeight(k?B.f:B.M,24,B.r),m,m,m),g=A.V("Daftarkan diri Anda untuk mendeteksi kesehatan tanaman padi.",m,m,m,A.b3().$2$color$fontSize(k?B.b9:B.b2,13),m,m,m),f=A.V("Nama Lengkap",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),e=A.hh(!1,n.x,B.P8,m,m,!1,m,m,new A.aJI()),d=A.V("Email",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),c=A.hh(!1,n.y,B.P7,m,B.ff,!1,m,m,new A.aJJ()),b=A.V("Password",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),a=n.as
+G(a0){var s,r,q,p,o,n=this,m=null,l=n.gde().m4($.ix(),t.FB),k=A.Q(a0).ax.a===B.T,j=t.p,i=A.nl(m,m,m,A.en(m,m,B.Od,m,m,new A.aJH(a0),m,m,m),m,A.aY(A.b([B.a5P,A.V("by Tirza Marsena (6150101220009)",m,m,m,A.bn(m,m,B.al,m,m,m,m,m,m,m,m,10,m,m,m,m,m,!0,m,m,m,m,m,m,m,m),m,m,m)],j),B.O,B.n,B.l)),h=A.V("Gabung PadiGuard",m,m,m,A.jb().$3$color$fontSize$fontWeight(k?B.f:B.M,24,B.r),m,m,m),g=A.V("Daftarkan diri Anda untuk mendeteksi kesehatan tanaman padi.",m,m,m,A.b3().$2$color$fontSize(k?B.b9:B.b2,13),m,m,m),f=A.V("Nama Lengkap",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),e=A.hh(!1,n.x,B.P8,m,m,!1,m,m,new A.aJI()),d=A.V("Email",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),c=A.hh(!1,n.y,B.P7,m,B.ff,!1,m,m,new A.aJJ()),b=A.V("Password",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m),a=n.as
 a=A.hh(!1,n.z,A.tY(m,m,m,m,m,m,m,m,!0,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,m,"Minimal 6 karakter",m,m,m,m,m,m,m,m,m,!0,!0,!1,m,B.mU,m,m,m,m,m,m,A.en(m,m,A.eC(a?B.h8:B.h9,m,m,m),m,m,new A.aJK(n),m,m,m),m,m,m,m,m),m,m,a,m,m,new A.aJL())
 s=A.V("Konfirmasi Password",m,m,m,A.b3().$3$color$fontSize$fontWeight(k?B.K:B.M,14,B.J),m,m,m)
 r=n.at
@@ -105606,7 +105606,7 @@ ahj(){this.K(new A.aE9(this))},
 IF(a){switch(a){case"Tinggi":return B.R
 case"Sedang":return B.a5
 case"Aman":default:return B.G}},
-G(a){var s,r,q,p,o,n,m,l,k,j,i=this,h=null,g="hamaName",f="dangerLevel",e=A.Q(a).ax.a===B.T,d=t.p,c=A.nl(h,h,h,h,h,A.aY(A.b([B.a52,A.V("by Tirza Marsena (6150101220009)",h,h,h,A.bn(h,h,B.al,h,h,h,h,h,h,h,h,10,h,h,h,h,h,!0,h,h,h,h,h,h,h,h),h,h,h)],d),B.O,B.n,B.l)),b=A.b([],d)
+G(a){var s,r,q,p,o,n,m,l,k,j,i=this,h=null,g="hamaName",f="dangerLevel",e=A.Q(a).ax.a===B.T,d=t.p,c=A.nl(h,h,h,h,h,A.aY(A.b([B.a53,A.V("by Tirza Marsena (6150101220009)",h,h,h,A.bn(h,h,B.al,h,h,h,h,h,h,h,h,10,h,h,h,h,h,!0,h,h,h,h,h,h,h,h),h,h,h)],d),B.O,B.n,B.l)),b=A.b([],d)
 if(i.x==null&&!i.z){s=A.V("Ambil Foto Tanaman Padi",h,h,h,A.jb().$2$fontSize$fontWeight(20,B.r),h,h,h)
 B.b.M(b,A.b([s,B.a_j,A.V("Ambil foto bulir padi secara dekat atau pilih dari galeri untuk mendeteksi hama dan kematangan.",h,h,h,A.b3().$2$color$fontSize(e?B.b9:B.b2,13),h,h,h),B.dx],d))}s=e?B.M:B.f
 r=A.aS(20)
@@ -105630,22 +105630,22 @@ r=A.aS(10)
 q=A.dX(A.ac(B.d.az(76.5),B.R.q()>>>16&255,B.R.q()>>>8&255,B.R.q()&255),1)
 p=i.as
 p.toString
-B.b.M(b,A.b([A.b7(h,A.bB(A.b([B.OA,B.oj,A.cv(A.V(p,h,h,h,B.E3,h,h,h),1)],d),B.p,B.n,B.l,0),B.o,h,h,new A.bd(s,h,q,r,h,h,B.C),h,h,h,h,B.lX,h,h,1/0),B.bq],d))}if(i.x==null&&!i.z)B.b.M(b,A.b([A.bB(A.b([A.cv(A.apq(B.OF,B.a53,new A.aEa(i),A.V4(h,h,h,h,h,h,h,h,h,h,h,h,B.lU,h,h,h,h,h,h,h)),1),B.hR,A.cv(A.xE(B.rR,B.a6_,new A.aEb(i,a),A.jm(h,h,B.a9,h,h,h,h,h,h,B.f,h,h,B.lU,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0)],d))
-if(i.x!=null&&i.Q==null&&!i.z){s=A.cv(A.apq(B.rS,B.a5N,i.gUA(),h),1)
+B.b.M(b,A.b([A.b7(h,A.bB(A.b([B.OA,B.oj,A.cv(A.V(p,h,h,h,B.E3,h,h,h),1)],d),B.p,B.n,B.l,0),B.o,h,h,new A.bd(s,h,q,r,h,h,B.C),h,h,h,h,B.lX,h,h,1/0),B.bq],d))}if(i.x==null&&!i.z)B.b.M(b,A.b([A.bB(A.b([A.cv(A.apq(B.OF,B.a54,new A.aEa(i),A.V4(h,h,h,h,h,h,h,h,h,h,h,h,B.lU,h,h,h,h,h,h,h)),1),B.hR,A.cv(A.xE(B.rR,B.a6_,new A.aEb(i,a),A.jm(h,h,B.a9,h,h,h,h,h,h,B.f,h,h,B.lU,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0)],d))
+if(i.x!=null&&i.Q==null&&!i.z){s=A.cv(A.apq(B.rS,B.a5M,i.gUA(),h),1)
 r=e?B.a6:B.a9
-B.b.M(b,A.b([A.bB(A.b([s,B.hR,A.cv(A.xE(B.Os,B.a5M,i.gaes(),A.jm(h,h,r,h,h,h,h,h,h,e?B.k:B.f,h,h,h,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0)],d))}if(i.Q!=null&&!i.z){s=A.V("Hasil Deteksi YOLOv12",h,h,h,A.b3().$2$fontSize$fontWeight(16,B.r),h,h,h)
+B.b.M(b,A.b([A.bB(A.b([s,B.hR,A.cv(A.xE(B.Os,B.a5L,i.gaes(),A.jm(h,h,r,h,h,h,h,h,h,e?B.k:B.f,h,h,h,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0)],d))}if(i.Q!=null&&!i.z){s=A.V("Hasil Deteksi YOLOv12",h,h,h,A.b3().$2$fontSize$fontWeight(16,B.r),h,h,h)
 r=e?B.M:B.li
 q=A.aS(16)
 p=A.dX(i.Q.i(0,g)!=null?A.ac(B.d.az(76.5),B.a5.q()>>>16&255,B.a5.q()>>>8&255,B.a5.q()&255):B.x,1)
 o=i.Q.i(0,g)
 if(o==null)o="Padi Sehat"
-o=A.b([B.a5a,B.c8,A.V(o,h,h,h,A.b3().$3$color$fontSize$fontWeight(i.Q.i(0,g)!=null?B.a5:B.G,14,B.r),h,h,h)],d)
+o=A.b([B.a5b,B.c8,A.V(o,h,h,h,A.b3().$3$color$fontSize$fontWeight(i.Q.i(0,g)!=null?B.a5:B.G,14,B.r),h,h,h)],d)
 if(i.Q.i(0,g)!=null)B.b.M(o,A.b([B.c8,A.V("Akurasi: "+J.aai(J.Ps(i.Q.i(0,"hamaConfidence"),100),1)+"%",h,h,h,A.bn(h,h,B.cA,h,h,h,h,h,h,h,h,11,h,h,h,h,h,!0,h,h,h,h,h,h,h,h),h,h,h)],d))
 r=A.cv(A.b7(h,A.aY(o,B.O,B.n,B.l),B.o,h,h,new A.bd(r,h,p,q,h,h,B.C),h,h,h,h,B.cY,h,h,h),1)
 q=e?B.M:B.cV
 p=A.aS(16)
 o=A.dX(A.ac(B.d.az(76.5),B.G.q()>>>16&255,B.G.q()>>>8&255,B.G.q()&255),1)
-p=A.bB(A.b([r,B.ej,A.cv(A.b7(h,A.aY(A.b([B.a5i,B.c8,A.V(i.Q.i(0,"kematangan"),h,h,h,A.b3().$3$color$fontSize$fontWeight(B.G,14,B.r),h,h,h),B.c8,A.V("Akurasi: "+J.aai(J.Ps(i.Q.i(0,"kematanganConfidence"),100),1)+"%",h,h,h,A.bn(h,h,B.cA,h,h,h,h,h,h,h,h,11,h,h,h,h,h,!0,h,h,h,h,h,h,h,h),h,h,h)],d),B.O,B.n,B.l),B.o,h,h,new A.bd(q,h,o,p,h,h,B.C),h,h,h,h,B.cY,h,h,h),1)],d),B.p,B.n,B.l,0)
+p=A.bB(A.b([r,B.ej,A.cv(A.b7(h,A.aY(A.b([B.a5j,B.c8,A.V(i.Q.i(0,"kematangan"),h,h,h,A.b3().$3$color$fontSize$fontWeight(B.G,14,B.r),h,h,h),B.c8,A.V("Akurasi: "+J.aai(J.Ps(i.Q.i(0,"kematanganConfidence"),100),1)+"%",h,h,h,A.bn(h,h,B.cA,h,h,h,h,h,h,h,h,11,h,h,h,h,h,!0,h,h,h,h,h,h,h,h),h,h,h)],d),B.O,B.n,B.l),B.o,h,h,new A.bd(q,h,o,p,h,h,B.C),h,h,h,h,B.cY,h,h,h),1)],d),B.p,B.n,B.l,0)
 o=i.IF(i.Q.i(0,f))
 o=A.ac(38,o.q()>>>16&255,o.q()>>>8&255,o.q()&255)
 q=A.aS(6)
@@ -105662,7 +105662,7 @@ j=i.Q.i(0,"treatment")
 m=A.b7(h,A.V(j==null?"":j,h,h,h,B.kf,h,h,h),B.o,h,h,new A.bd(m,h,k,l,h,h,B.C),h,h,h,h,B.cY,h,h,1/0)
 l=A.cv(A.apq(B.rR,B.a5Y,i.gUA(),h),1)
 k=e?B.a6:B.a9
-B.b.M(b,A.b([s,B.aR,p,B.aB,q,B.bq,r,B.aS,o,B.bq,n,B.aS,m,B.hS,A.bB(A.b([l,B.hR,A.cv(A.xE(B.Oq,B.a5c,new A.aEc(a),A.jm(h,h,k,h,h,h,h,h,h,e?B.k:B.f,h,h,h,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0),B.dy],d))}return A.hd(c,h,A.mO(A.aY(b,B.O,B.n,B.l),B.bI),h,h)}}
+B.b.M(b,A.b([s,B.aR,p,B.aB,q,B.bq,r,B.aS,o,B.bq,n,B.aS,m,B.hS,A.bB(A.b([l,B.hR,A.cv(A.xE(B.Oq,B.a5d,new A.aEc(a),A.jm(h,h,k,h,h,h,h,h,h,e?B.k:B.f,h,h,h,h,h,h,h,h,h,h)),1)],d),B.p,B.n,B.l,0),B.dy],d))}return A.hd(c,h,A.mO(A.aY(b,B.O,B.n,B.l),B.bI),h,h)}}
 A.aE7.prototype={
 $0(){var s=this.b
 s.x=this.c
@@ -105815,7 +105815,7 @@ i=A.a5(new A.aH(i,new A.aGd(o),j),j.h("p.E"))
 m.a=i
 j=i}else j=i
 s=t.p
-r=A.nl(n,n,n,n,n,A.aY(A.b([B.a5b,A.V("by Tirza Marsena (6150101220009)",n,n,n,A.bn(n,n,B.al,n,n,n,n,n,n,n,n,10,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),n,n,n)],s),B.O,B.n,B.l))
+r=A.nl(n,n,n,n,n,A.aY(A.b([B.a5c,A.V("by Tirza Marsena (6150101220009)",n,n,n,A.bn(n,n,B.al,n,n,n,n,n,n,n,n,10,n,n,n,n,n,!0,n,n,n,n,n,n,n,n),n,n,n)],s),B.O,B.n,B.l))
 q=A.Yj(n,B.dq,!1,n,!0,B.B,n,A.aQl(),o.as,n,n,n,n,n,2,A.tY(n,n,n,B.lT,n,n,n,n,!0,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,n,"Cari berdasarkan tanggal...",n,n,n,n,n,n,n,n,n,!0,!0,!1,n,B.Oj,n,n,n,n,n,n,o.Q!=null?A.en(n,n,B.Oz,n,n,o.gag8(),n,n,n):n,n,n,n,n,n),B.a7,!0,n,!0,n,!1,n,B.cN,n,n,n,n,n,n,n,n,1,n,n,!1,"\u2022",n,n,n,n,new A.aGe(o,a),!1,n,n,!0,n,!0,n,B.bI,n,n,n,n,n,n,n,n,n,n,n,n,!0,B.aT,n,B.fe,n,n,n,n)
 p=A.bB(A.b([o.HS("Semua"),B.bp,o.HS("Hama"),B.bp,o.HS("Kematangan")],s),B.p,B.n,B.l,0)
 if(o.y)m=B.fG
@@ -105862,7 +105862,7 @@ s.as.jE(0,B.ox)},
 $S:0}
 A.aG_.prototype={
 $1(a){var s=null,r=A.V("Hapus Data Deteksi",s,s,s,A.b3().$1$fontWeight(B.r),s,s,s)
-return A.iA(A.b([A.da(B.bT,new A.aFY(a),s),A.da(B.oB,new A.aFZ(a),A.kw(s,s,s,s,s,s,s,s,s,B.R,s,s,s,s,s,s,s,s,s,s))],t.p),s,B.a5R,s,r)},
+return A.iA(A.b([A.da(B.bT,new A.aFY(a),s),A.da(B.oB,new A.aFZ(a),A.kw(s,s,s,s,s,s,s,s,s,B.R,s,s,s,s,s,s,s,s,s,s))],t.p),s,B.a5Q,s,r)},
 $S:27}
 A.aFY.prototype={
 $0(){A.cl(this.a,!1).cS(!1)
@@ -106043,11 +106043,11 @@ i=j?B.M:B.f
 q=A.aS(16)
 p=A.dX(j?B.bH:B.dj,1)
 r=r?l:k.c
-i=A.b7(l,A.aY(A.b([A.kh(l,l,l,!0,!0,B.ha,l,l,!1,l,l,l,l,B.a5O,A.V(r==null?"":r,l,l,l,B.a2j,l,l,l),l),B.lN,A.kh(l,l,l,!0,!0,B.OD,l,new A.ar0(m,a,b,k),!1,l,l,l,B.a5t,B.a5p,B.mX,l),B.lN,A.kh(l,l,l,!0,!0,B.OI,l,new A.ar1(m,a),!1,l,l,l,B.a5l,B.a5x,B.mX,l),B.lN,A.kh(l,l,l,!0,!0,B.O_,l,new A.ar2(m,a),!1,l,l,l,B.a56,B.a5A,B.mX,l)],h),B.p,B.n,B.l),B.o,l,l,new A.bd(i,l,p,q,l,l,B.C),l,l,l,l,l,l,l,l)
+i=A.b7(l,A.aY(A.b([A.kh(l,l,l,!0,!0,B.ha,l,l,!1,l,l,l,l,B.a5N,A.V(r==null?"":r,l,l,l,B.a2j,l,l,l),l),B.lN,A.kh(l,l,l,!0,!0,B.OD,l,new A.ar0(m,a,b,k),!1,l,l,l,B.a5t,B.a5p,B.mX,l),B.lN,A.kh(l,l,l,!0,!0,B.OI,l,new A.ar1(m,a),!1,l,l,l,B.a5S,B.a52,B.mX,l),B.lN,A.kh(l,l,l,!0,!0,B.O_,l,new A.ar2(m,a),!1,l,l,l,B.a57,B.a5z,B.mX,l)],h),B.p,B.n,B.l),B.o,l,l,new A.bd(i,l,p,q,l,l,B.C),l,l,l,l,l,l,l,l)
 r=j?B.J8:B.IM
 return A.hd(g,l,A.mO(A.aY(A.b([s,B.DC,i,B.hS,A.dq(A.xE(B.O4,B.a5v,new A.ar3(m,a,b),A.jm(l,l,r,l,l,l,0,l,l,B.R,l,l,l,l,new A.c_(A.aS(12),B.q),l,l,l,l,l)),52,1/0),B.dy],h),B.p,B.n,B.l),B.Mg),l,l)}}
 A.aqM.prototype={
-$1(a){var s=null,r=A.aS(20),q=A.V("Ganti Foto Profil",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s),p=t.p,o=A.aY(A.b([A.kh(s,s,s,!0,!0,B.I4,s,new A.aqJ(a),!1,s,s,s,B.a5I,A.V("Kamera",s,s,s,A.b3().$1$fontWeight(B.ay),s,s,s),s,s),B.fY,A.kh(s,s,s,!0,!0,B.I5,s,new A.aqK(a),!1,s,s,s,B.a5h,A.V("Galeri",s,s,s,A.b3().$1$fontWeight(B.ay),s,s,s),s,s)],p),B.p,B.n,B.ah)
+$1(a){var s=null,r=A.aS(20),q=A.V("Ganti Foto Profil",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s),p=t.p,o=A.aY(A.b([A.kh(s,s,s,!0,!0,B.I4,s,new A.aqJ(a),!1,s,s,s,B.a5H,A.V("Kamera",s,s,s,A.b3().$1$fontWeight(B.ay),s,s,s),s,s),B.fY,A.kh(s,s,s,!0,!0,B.I5,s,new A.aqK(a),!1,s,s,s,B.a5i,A.V("Galeri",s,s,s,A.b3().$1$fontWeight(B.ay),s,s,s),s,s)],p),B.p,B.n,B.ah)
 return A.iA(A.b([A.da(B.bT,new A.aqL(a),s)],p),s,o,new A.c_(r,B.q),q)},
 $S:27}
 A.aqJ.prototype={
@@ -106089,7 +106089,7 @@ else A.jY(n,"Terjadi kesalahan saat menyimpan profil.","Gagal Memperbarui",B.jF)
 return A.C($async$$0,r)},
 $S:10}
 A.aqO.prototype={
-$1(a){var s=null,r=A.aS(16),q=t.p,p=A.bB(A.b([B.NJ,B.bp,A.V("Tentang Aplikasi",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s)],q),B.p,B.n,B.l,0),o=A.aY(A.b([B.a5d,B.c8,A.V('"KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI MENGGUNAKAN METODE YOLOV12"',s,s,s,A.b3().$3$color$fontSize$fontWeight(B.G,13,B.ay),s,s,s),B.aB,B.a65,B.c8,B.a5g,B.aB,B.fY,B.aS,A.bB(A.b([A.V("Versi Aplikasi",s,s,s,A.bn(s,s,B.al,s,s,s,s,s,s,s,s,11,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),s,s,s),A.V("v1.0.0",s,s,s,B.a3F,s,s,s)],q),B.p,B.aY,B.l,0)],q),B.O,B.n,B.ah)
+$1(a){var s=null,r=A.aS(16),q=t.p,p=A.bB(A.b([B.NJ,B.bp,A.V("Tentang Aplikasi",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s)],q),B.p,B.n,B.l,0),o=A.aY(A.b([B.a5e,B.c8,A.V('"KLASIFIKASI JENIS HAMA DAN KEMATANGAN TANAMAN PADI MENGGUNAKAN METODE YOLOV12"',s,s,s,A.b3().$3$color$fontSize$fontWeight(B.G,13,B.ay),s,s,s),B.aB,B.a65,B.c8,B.a5h,B.aB,B.fY,B.aS,A.bB(A.b([A.V("Versi Aplikasi",s,s,s,A.bn(s,s,B.al,s,s,s,s,s,s,s,s,11,s,s,s,s,s,!0,s,s,s,s,s,s,s,s),s,s,s),A.V("v1.0.0",s,s,s,B.a3F,s,s,s)],q),B.p,B.aY,B.l,0)],q),B.O,B.n,B.ah)
 return A.iA(A.b([A.da(B.Ed,new A.aqN(a),s)],q),s,o,new A.c_(r,B.q),p)},
 $S:27}
 A.aqN.prototype={
@@ -106097,7 +106097,7 @@ $0(){A.cl(this.a,!1).cS(null)
 return null},
 $S:0}
 A.aqV.prototype={
-$1(a){var s=null,r=A.aS(20),q=A.V("Petunjuk",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s),p=A.dq(A.Uc(new A.aqT(),4,s,!0),s,17976931348623157e292)
+$1(a){var s=null,r=A.aS(20),q=A.V("Bantuan",s,s,s,A.b3().$2$fontSize$fontWeight(18,B.r),s,s,s),p=A.dq(A.Uc(new A.aqT(),4,s,!0),s,17976931348623157e292)
 return A.iA(A.b([A.da(B.Ed,new A.aqU(a),s)],t.p),s,p,new A.c_(r,B.q),q)},
 $S:27}
 A.aqT.prototype={
@@ -113574,8 +113574,8 @@ B.di=new A.t2(3,"experimentalWebParagraph")
 B.I_=new A.nq(null,null,null,null,null,null,null)
 B.I0=new A.Dc(null,null,null,null,null,null)
 B.da=new A.q(!0,null,null,null,null,null,11,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5z=new A.aZ("Tidak ada data",null,B.da,null,null,null,null,null,null,null)
-B.pZ=new A.kU(B.X,null,null,B.a5z,null)
+B.a5y=new A.aZ("Tidak ada data",null,B.da,null,null,null,null,null,null,null)
+B.pZ=new A.kU(B.X,null,null,B.a5y,null)
 B.qY=new A.ag(0,16,0,16)
 B.aX=new A.qi(2,"center")
 B.l=new A.Um(1,"max")
@@ -113589,8 +113589,8 @@ B.DD=new A.cP(20,20,B.I6,null)
 B.ej=new A.cP(12,null,null,null)
 B.K=new A.o(0.7019607843137254,1,1,1,B.e)
 B.a0y=new A.q(!0,B.K,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5f=new A.aZ("Memuat data cuaca...",null,B.a0y,null,null,null,null,null,null,null)
-B.RF=s([B.DD,B.ej,B.a5f],t.p)
+B.a5g=new A.aZ("Memuat data cuaca...",null,B.a0y,null,null,null,null,null,null,null)
+B.RF=s([B.DD,B.ej,B.a5g],t.p)
 B.Yb=new A.mI(B.ar,B.aX,B.l,B.p,null,B.bQ,null,0,B.RF,null)
 B.WA=new A.be(B.qY,B.Yb,null)
 B.I1=new A.kU(B.X,null,null,B.WA,null)
@@ -113757,14 +113757,14 @@ B.bp=new A.cP(8,null,null,null)
 B.mH=new A.SE(0,"tight")
 B.r=new A.h6(700)
 B.a17=new A.q(!0,B.a6,null,null,null,null,13,B.r,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5S=new A.aZ("Izin kamera dibutuhkan",null,B.a17,null,null,null,null,null,null,null)
-B.Mp=new A.Ei(1,B.mH,B.a5S,null)
+B.a5R=new A.aZ("Izin kamera dibutuhkan",null,B.a17,null,null,null,null,null,null,null)
+B.Mp=new A.Ei(1,B.mH,B.a5R,null)
 B.QS=s([B.OG,B.bp,B.Mp],t.p)
 B.Y9=new A.mI(B.ar,B.n,B.l,B.p,null,B.bQ,null,0,B.QS,null)
 B.aS=new A.cP(null,8,null,null)
 B.a3o=new A.q(!0,B.K,null,null,null,null,12,null,null,null,null,null,1.5,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a59=new A.aZ('Cari popup izin di bagian atas browser (dekat address bar) dan klik "Izinkan" atau "Allow".',null,B.a3o,null,null,null,null,null,null,null)
-B.SG=s([B.Y9,B.aS,B.a59],t.p)
+B.a5a=new A.aZ('Cari popup izin di bagian atas browser (dekat address bar) dan klik "Izinkan" atau "Allow".',null,B.a3o,null,null,null,null,null,null,null)
+B.SG=s([B.Y9,B.aS,B.a5a],t.p)
 B.Kv=new A.Du(B.an,B.n,B.l,B.p,null,B.bQ,null,0,B.SG,null)
 B.iz=new A.k4(0,"cut")
 B.iA=new A.k4(1,"copy")
@@ -114547,8 +114547,8 @@ B.R_=s([18,15,10,12,15,18,15,12,12],t.n)
 B.tj=s(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],t.s)
 B.a5r=new A.aZ("Petani",null,null,null,null,null,null,null,null,null)
 B.Lp=new A.iF("petani",B.a5r,B.bU,null,t.b7)
-B.a5K=new A.aZ("Admin",null,null,null,null,null,null,null,null,null)
-B.Lo=new A.iF("admin",B.a5K,B.bU,null,t.b7)
+B.a5J=new A.aZ("Admin",null,null,null,null,null,null,null,null,null)
+B.Lo=new A.iF("admin",B.a5J,B.bU,null,t.b7)
 B.tk=s([B.Lp,B.Lo],t.FG)
 B.R2=s(["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],t.s)
 B.R5=s([1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298],t.t)
@@ -114711,16 +114711,16 @@ B.SI=s([B.eO,B.j4,B.j5,B.v,B.J,B.ay,B.r,B.j6,B.h6],A.ax("y<h6>"))
 B.tv=s([31,-1,31,30,31,30,31,31,30,31,30,31],t.t)
 B.SJ=s([0.015176349177441876,0.045529047532325624,0.07588174588720938,0.10623444424209313,0.13658714259697685,0.16693984095186062,0.19729253930674434,0.2276452376616281,0.2579979360165119,0.28835063437139563,0.3188300904430532,0.350925934958123,0.3848314933096426,0.42057480301049466,0.458183274052838,0.4976837250274023,0.5391024159806381,0.5824650784040898,0.6277969426914107,0.6751227633498623,0.7244668422128921,0.775853049866786,0.829304845476233,0.8848452951698498,0.942497089126609,1.0022825574869039,1.0642236851973577,1.1283421258858297,1.1946592148522128,1.2631959812511864,1.3339731595349034,1.407011200216447,1.4823302800086415,1.5599503113873272,1.6398909516233677,1.7221716113234105,1.8068114625156377,1.8938294463134073,1.9832442801866852,2.075074464868551,2.1693382909216234,2.2660538449872063,2.36523901573795,2.4669114995532007,2.5710888059345764,2.6777882626779785,2.7870270208169257,2.898822059350997,3.0131901897720907,3.1301480604002863,3.2497121605402226,3.3718988244681087,3.4967242352587946,3.624204428461639,3.754355295633311,3.887192587735158,4.022731918402185,4.160988767090289,4.301978482107941,4.445716283538092,4.592217266055746,4.741496401646282,4.893568542229298,5.048448422192488,5.20615066083972,5.3666897647573375,5.5300801301023865,5.696336044816294,5.865471690767354,6.037501145825082,6.212438385869475,6.390297286737924,6.571091626112461,6.7548350853498045,6.941541251256611,7.131223617812143,7.323895587840543,7.5195704746346665,7.7182615035334345,7.919981813454504,8.124744458384042,8.332562408825165,8.543448553206703,8.757415699253682,8.974476575321063,9.194643831691977,9.417930041841839,9.644347703669503,9.873909240696694,10.106627003236781,10.342513269534024,10.58158024687427,10.8238400726681,11.069304815507364,11.317986476196008,11.569896988756009,11.825048221409341,12.083451977536606,12.345119996613247,12.610063955123938,12.878295467455942,13.149826086772048,13.42466730586372,13.702830557985108,13.984327217668513,14.269168601521828,14.55736596900856,14.848930523210871,15.143873411576273,15.44220572664832,15.743938506781891,16.04908273684337,16.35764934889634,16.66964922287304,16.985093187232053,17.30399201960269,17.62635644741625,17.95219714852476,18.281524751807332,18.614349837764564,18.95068293910138,19.290534541298456,19.633915083172692,19.98083495742689,20.331304511189067,20.685334046541502,21.042933821039977,21.404114048223256,21.76888489811322,22.137256497705877,22.50923893145328,22.884842241736916,23.264076429332462,23.6469514538663,24.033477234264016,24.42366364919083,24.817520537484558,25.21505769858089,25.61628489293138,26.021211842414342,26.429848230738664,26.842203703840827,27.258287870275353,27.678110301598522,28.10168053274597,28.529008062403893,28.96010235337422,29.39497283293396,29.83362889318845,30.276079891419332,30.722335150426627,31.172403958865512,31.62629557157785,32.08401920991837,32.54558406207592,33.010999283389665,33.4802739966603,33.953417292456834,34.430438229418264,34.911345834551085,35.39614910352207,35.88485700094671,36.37747846067349,36.87402238606382,37.37449765026789,37.87891309649659,38.38727753828926,38.89959975977785,39.41588851594697,39.93615253289054,40.460400508064545,40.98864111053629,41.520882981230194,42.05713473317016,42.597404951718396,43.141702194811224,43.6900349931913,44.24241185063697,44.798841244188324,45.35933162437017,45.92389141541209,46.49252901546552,47.065252796817916,47.64207110610409,48.22299226451468,48.808024568002054,49.3971762874833,49.9904556690408,50.587870934119984,51.189430279724725,51.79514187861014,52.40501387947288,53.0190544071392,53.637271562750364,54.259673423945976,54.88626804504493,55.517063457223934,56.15206766869424,56.79128866487574,57.43473440856916,58.08241284012621,58.734331877617365,59.39049941699807,60.05092333227251,60.715611475655585,61.38457167773311,62.057811747619894,62.7353394731159,63.417162620860914,64.10328893648692,64.79372614476921,65.48848194977529,66.18756403501224,66.89098006357258,67.59873767827808,68.31084450182222,69.02730813691093,69.74813616640164,70.47333615344107,71.20291564160104,71.93688215501312,72.67524319850172,73.41800625771542,74.16517879925733,74.9167682708136,75.67278210128072,76.43322770089146,77.1981124613393,77.96744375590167,78.74122893956174,79.51947534912904,80.30219030335869,81.08938110306934,81.88105503125999,82.67721935322541,83.4778813166706,84.28304815182372,85.09272707154808,85.90692527145302,86.72564993000343,87.54890820862819,88.3767072518277,89.2090541872801,90.04595612594655,90.88742016217518,91.73345337380438,92.58406282226491,93.43925555268066,94.29903859396902,95.16341895893969,96.03240364439274,96.9059996312159,97.78421388448044,98.6670533535366,99.55452497210776],t.n)
 B.fh=new A.q(!0,null,null,null,null,null,12,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5k=new A.aZ("Semua Hama",null,B.fh,null,null,null,null,null,null,null)
-B.Lm=new A.iF("Semua",B.a5k,B.bU,null,t.b7)
-B.a5J=new A.aZ("Wereng Coklat",null,B.fh,null,null,null,null,null,null,null)
-B.Ll=new A.iF("Wereng Coklat",B.a5J,B.bU,null,t.b7)
-B.a5y=new A.aZ("Walang Sangit",null,B.fh,null,null,null,null,null,null,null)
-B.Lk=new A.iF("Walang Sangit",B.a5y,B.bU,null,t.b7)
+B.a5l=new A.aZ("Semua Hama",null,B.fh,null,null,null,null,null,null,null)
+B.Lm=new A.iF("Semua",B.a5l,B.bU,null,t.b7)
+B.a5I=new A.aZ("Wereng Coklat",null,B.fh,null,null,null,null,null,null,null)
+B.Ll=new A.iF("Wereng Coklat",B.a5I,B.bU,null,t.b7)
+B.a5x=new A.aZ("Walang Sangit",null,B.fh,null,null,null,null,null,null,null)
+B.Lk=new A.iF("Walang Sangit",B.a5x,B.bU,null,t.b7)
 B.a5q=new A.aZ("Penggerek Batang",null,B.fh,null,null,null,null,null,null,null)
 B.Lj=new A.iF("Penggerek Batang",B.a5q,B.bU,null,t.b7)
-B.a5H=new A.aZ("Ulat Grayak",null,B.fh,null,null,null,null,null,null,null)
-B.Lq=new A.iF("Ulat Grayak",B.a5H,B.bU,null,t.b7)
+B.a5G=new A.aZ("Ulat Grayak",null,B.fh,null,null,null,null,null,null,null)
+B.Lq=new A.iF("Ulat Grayak",B.a5G,B.bU,null,t.b7)
 B.a5X=new A.aZ("Sehat (Aman)",null,B.fh,null,null,null,null,null,null,null)
 B.Ln=new A.iF("Sehat",B.a5X,B.bU,null,t.b7)
 B.SL=s([B.Lm,B.Ll,B.Lk,B.Lj,B.Lq,B.Ln],t.FG)
@@ -116258,24 +116258,24 @@ B.a_o=new A.mQ(5,"timeout")
 B.a_p=new A.zI(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.a5W=new A.aZ("Analisis berhasil! Hasil deteksi dimuat.",null,null,null,null,null,null,null,null,null)
 B.a_q=new A.hA(B.a5W,B.G,null,null,null,null,null,null,B.cr,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
-B.a5G=new A.aZ("Gagal menghapus user.",null,null,null,null,null,null,null,null,null)
-B.a_r=new A.hA(B.a5G,B.R,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
+B.a5F=new A.aZ("Gagal menghapus user.",null,null,null,null,null,null,null,null,null)
+B.a_r=new A.hA(B.a5F,B.R,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
 B.a5n=new A.aZ("Riwayat berhasil dihapus.",null,null,null,null,null,null,null,null,null)
 B.DG=new A.hA(B.a5n,B.G,null,null,null,null,null,null,B.cr,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
 B.a64=new A.aZ("Retrain YOLOv12 Berhasil! Akurasi model meningkat.",null,null,null,null,null,null,null,null,null)
 B.a_s=new A.hA(B.a64,B.G,null,null,null,null,null,null,B.cr,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
 B.a5U=new A.aZ("User berhasil dihapus.",null,null,null,null,null,null,null,null,null)
 B.a_t=new A.hA(B.a5U,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
-B.a5B=new A.aZ("Data user berhasil diperbarui.",null,null,null,null,null,null,null,null,null)
-B.a_u=new A.hA(B.a5B,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
-B.a55=new A.aZ("Gagal memperbarui user.",null,null,null,null,null,null,null,null,null)
-B.a_v=new A.hA(B.a55,B.R,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
-B.a5P=new A.aZ("User baru berhasil ditambahkan.",null,null,null,null,null,null,null,null,null)
-B.a_w=new A.hA(B.a5P,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
+B.a5A=new A.aZ("Data user berhasil diperbarui.",null,null,null,null,null,null,null,null,null)
+B.a_u=new A.hA(B.a5A,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
+B.a56=new A.aZ("Gagal memperbarui user.",null,null,null,null,null,null,null,null,null)
+B.a_v=new A.hA(B.a56,B.R,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
+B.a5O=new A.aZ("User baru berhasil ditambahkan.",null,null,null,null,null,null,null,null,null)
+B.a_w=new A.hA(B.a5O,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
 B.a5w=new A.aZ("Data deteksi berhasil dihapus.",null,null,null,null,null,null,null,null,null)
 B.a_x=new A.hA(B.a5w,B.G,null,null,null,null,null,null,null,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
-B.a54=new A.aZ("Deteksi berhasil disimpan ke riwayat.",null,null,null,null,null,null,null,null,null)
-B.a_y=new A.hA(B.a54,B.G,null,null,null,null,null,null,B.cr,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
+B.a55=new A.aZ("Deteksi berhasil disimpan ke riwayat.",null,null,null,null,null,null,null,null,null)
+B.a_y=new A.hA(B.a55,B.G,null,null,null,null,null,null,B.cr,null,null,null,null,B.bl,!1,null,null,null,B.B,null)
 B.DH=new A.If(0,"permissive")
 B.a_z=new A.If(1,"normal")
 B.a_A=new A.If(2,"forced")
@@ -116664,29 +116664,29 @@ B.a3S=new A.q(!0,B.k,null,".AppleSystemUIFont",null,null,null,null,null,null,nul
 B.a0M=new A.q(!0,B.k,null,".AppleSystemUIFont",null,null,null,null,null,null,null,null,null,null,null,null,null,B.j,null,null,null,"blackRedwoodCity labelSmall",null,null,null,null)
 B.a50=new A.eY(B.a2F,B.a1w,B.a2G,B.a38,B.a1b,B.a1j,B.a1S,B.a33,B.a25,B.a3z,B.a0F,B.a0X,B.a3w,B.a3S,B.a0M)
 B.a51=new A.aZ("Masuk",null,null,null,null,null,null,null,null,null)
-B.a52=new A.aZ("Deteksi YOLOv12",null,null,null,null,null,null,null,null,null)
-B.a53=new A.aZ("Galeri",null,null,null,null,null,null,null,null,null)
-B.a56=new A.aZ("Informasi skripsi & pengembang",null,B.da,null,null,null,null,null,null,null)
+B.kg=new A.q(!0,null,null,null,null,null,13,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
+B.a52=new A.aZ("Bantuan",null,B.kg,null,null,null,null,null,null,null)
+B.a53=new A.aZ("Deteksi YOLOv12",null,null,null,null,null,null,null,null,null)
+B.a54=new A.aZ("Galeri",null,null,null,null,null,null,null,null,null)
+B.a57=new A.aZ("Informasi skripsi & pengembang",null,B.da,null,null,null,null,null,null,null)
 B.a2M=new A.q(!0,B.f,null,null,null,null,15,B.r,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a57=new A.aZ("Menghubungkan ke kamera...",null,B.a2M,null,null,null,null,null,null,null)
-B.a58=new A.aZ("Tambah",null,null,null,null,null,null,null,null,null)
-B.a5a=new A.aZ("Hama Terdeteksi",null,B.da,null,null,null,null,null,null,null)
-B.a5b=new A.aZ("Riwayat Deteksi Padi",null,null,null,null,null,null,null,null,null)
-B.a5c=new A.aZ("Ke Riwayat",null,null,null,null,null,null,null,null,null)
+B.a58=new A.aZ("Menghubungkan ke kamera...",null,B.a2M,null,null,null,null,null,null,null)
+B.a59=new A.aZ("Tambah",null,null,null,null,null,null,null,null,null)
+B.a5b=new A.aZ("Hama Terdeteksi",null,B.da,null,null,null,null,null,null,null)
+B.a5c=new A.aZ("Riwayat Deteksi Padi",null,null,null,null,null,null,null,null,null)
+B.a5d=new A.aZ("Ke Riwayat",null,null,null,null,null,null,null,null,null)
 B.E2=new A.q(!0,null,null,null,null,null,12,B.r,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5d=new A.aZ("Aplikasi Skripsi:",null,B.E2,null,null,null,null,null,null,null)
+B.a5e=new A.aZ("Aplikasi Skripsi:",null,B.E2,null,null,null,null,null,null,null)
 B.a2x=new A.q(!0,B.lo,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5e=new A.aZ("Batal",null,B.a2x,null,null,null,null,null,null,null)
-B.a5g=new A.aZ("Sistem pendeteksi hama dan kematangan tanaman padi berbasis mobile. Dikembangkan menggunakan Flutter dan ditenagai oleh model YOLOv12 di backend untuk klasifikasi objek secara presisi.",null,B.E6,null,null,null,null,null,null,null)
-B.a5h=new A.aZ("Pilih foto dari galeri HP / Komputer",null,null,null,null,null,null,null,null,null)
-B.a5i=new A.aZ("Kematangan Padi",null,B.da,null,null,null,null,null,null,null)
+B.a5f=new A.aZ("Batal",null,B.a2x,null,null,null,null,null,null,null)
+B.a5h=new A.aZ("Sistem pendeteksi hama dan kematangan tanaman padi berbasis mobile. Dikembangkan menggunakan Flutter dan ditenagai oleh model YOLOv12 di backend untuk klasifikasi objek secara presisi.",null,B.E6,null,null,null,null,null,null,null)
+B.a5i=new A.aZ("Pilih foto dari galeri HP / Komputer",null,null,null,null,null,null,null,null,null)
+B.a5j=new A.aZ("Kematangan Padi",null,B.da,null,null,null,null,null,null,null)
 B.a4J=new A.q(!0,B.f,null,null,null,null,18,B.r,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-B.a5j=new A.aZ("Kamera",null,B.a4J,null,null,null,null,null,null,null)
-B.a5l=new A.aZ("Tanya jawab penggunaan aplikasi",null,B.da,null,null,null,null,null,null,null)
+B.a5k=new A.aZ("Kamera",null,B.a4J,null,null,null,null,null,null,null)
 B.a5m=new A.aZ("Reset Password",null,null,null,null,null,null,null,null,null)
 B.a1I=new A.q(!0,B.f,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.a5o=new A.aZ("Go to home page",null,B.a1I,null,null,null,null,null,null,null)
-B.kg=new A.q(!0,null,null,null,null,null,13,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.a5p=new A.aZ("Edit Profil",null,B.kg,null,null,null,null,null,null,null)
 B.a1x=new A.q(!0,null,null,null,null,null,13,B.r,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.E9=new A.aZ("Tingkat Ancaman:",null,B.a1x,null,null,null,null,null,null,null)
@@ -116696,22 +116696,22 @@ B.Ea=new A.aZ("Simpan",null,null,null,null,null,null,null,null,null)
 B.a5t=new A.aZ("Ubah nama atau password",null,B.da,null,null,null,null,null,null,null)
 B.a5u=new A.aZ("Dataset & Model",null,null,null,null,null,null,null,null,null)
 B.a5v=new A.aZ("Keluar Aplikasi",null,null,null,null,null,null,null,null,null)
-B.a5x=new A.aZ("Petunjuk",null,B.kg,null,null,null,null,null,null,null)
 B.hX=new A.aZ("Keluar",null,null,null,null,null,null,null,null,null)
-B.a5A=new A.aZ("Tentang Aplikasi",null,B.kg,null,null,null,null,null,null,null)
-B.a5C=new A.aZ("Home",null,null,null,null,null,null,null,null,null)
-B.a5D=new A.aZ("Page Not Found",null,B.hW,null,null,null,null,null,null,null)
-B.a5E=new A.aZ("Semua Data Deteksi",null,null,null,null,null,null,null,null,null)
-B.a5F=new A.aZ("Coba Lagi",null,null,null,null,null,null,null,null,null)
+B.a5z=new A.aZ("Tentang Aplikasi",null,B.kg,null,null,null,null,null,null,null)
+B.a5B=new A.aZ("Home",null,null,null,null,null,null,null,null,null)
+B.a5C=new A.aZ("Page Not Found",null,B.hW,null,null,null,null,null,null,null)
+B.a5D=new A.aZ("Semua Data Deteksi",null,null,null,null,null,null,null,null,null)
+B.a5E=new A.aZ("Coba Lagi",null,null,null,null,null,null,null,null,null)
 B.oB=new A.aZ("Hapus",null,null,null,null,null,null,null,null,null)
-B.a5I=new A.aZ("Ambil foto langsung dari kamera",null,null,null,null,null,null,null,null,null)
+B.a5H=new A.aZ("Ambil foto langsung dari kamera",null,null,null,null,null,null,null,null,null)
 B.Eb=new A.aZ("Apakah Anda yakin ingin keluar dari akun admin Anda?",null,null,null,null,null,null,null,null,null)
-B.a5L=new A.aZ("Dashboard Analitik",null,null,null,null,null,null,null,null,null)
-B.a5M=new A.aZ("Mulai Analisis",null,null,null,null,null,null,null,null,null)
-B.a5N=new A.aZ("Reset",null,null,null,null,null,null,null,null,null)
-B.a5O=new A.aZ("Email",null,B.kg,null,null,null,null,null,null,null)
-B.a5Q=new A.aZ("Buat Akun Baru",null,null,null,null,null,null,null,null,null)
-B.a5R=new A.aZ("Apakah Anda yakin ingin menghapus data deteksi ini?",null,null,null,null,null,null,null,null,null)
+B.a5K=new A.aZ("Dashboard Analitik",null,null,null,null,null,null,null,null,null)
+B.a5L=new A.aZ("Mulai Analisis",null,null,null,null,null,null,null,null,null)
+B.a5M=new A.aZ("Reset",null,null,null,null,null,null,null,null,null)
+B.a5N=new A.aZ("Email",null,B.kg,null,null,null,null,null,null,null)
+B.a5P=new A.aZ("Buat Akun Baru",null,null,null,null,null,null,null,null,null)
+B.a5Q=new A.aZ("Apakah Anda yakin ingin menghapus data deteksi ini?",null,null,null,null,null,null,null,null,null)
+B.a5S=new A.aZ("Petunjuk",null,B.da,null,null,null,null,null,null,null)
 B.a5T=new A.aZ("Kelola User",null,null,null,null,null,null,null,null,null)
 B.Ec=new A.aZ("Apakah Anda yakin ingin keluar dari aplikasi?",null,null,null,null,null,null,null,null,null)
 B.a5V=new A.aZ("Apakah Anda yakin ingin keluar dari akun Anda?",null,null,null,null,null,null,null,null,null)

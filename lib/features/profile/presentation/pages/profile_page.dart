@@ -255,7 +255,7 @@ class ProfilePage extends ConsumerWidget {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'Petunjuk',
+          'Bantuan',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: SizedBox(
@@ -454,11 +454,11 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   const Divider(height: 1),
                   
-                  // Action: FAQ
+                  // Action: FAQ / Bantuan
                   ListTile(
                     leading: const Icon(Icons.help_outline),
-                    title: const Text('Petunjuk', style: TextStyle(fontSize: 13)),
-                    subtitle: const Text('Tanya jawab penggunaan aplikasi', style: TextStyle(fontSize: 11)),
+                    title: const Text('Bantuan', style: TextStyle(fontSize: 13)),
+                    subtitle: const Text('Petunjuk', style: TextStyle(fontSize: 11)),
                     trailing: const Icon(Icons.chevron_right, size: 18),
                     onTap: () => _showFAQDialog(context),
                   ),
