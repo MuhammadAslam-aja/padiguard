@@ -785,32 +785,64 @@ if ($path === '/auth/reset-password' && $method === 'POST') {
     ]);
 }
 
-// Route: /image (Serve uploaded images with CORS headers)
+function serveImageFile($filePath) {
+    if (!file_exists($filePath) || is_dir($filePath)) return;
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $contentType = 'image/jpeg';
+    if ($ext === 'png') {
+        $contentType = 'image/png';
+    } elseif ($ext === 'gif') {
+        $contentType = 'image/gif';
+    } elseif ($ext === 'webp') {
+        $contentType = 'image/webp';
+    } elseif ($ext === 'svg') {
+        $contentType = 'image/svg+xml';
+    }
+    header("Access-Control-Allow-Origin: *");
+    header("Content-Type: $contentType");
+    header("Content-Length: " . filesize($filePath));
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    readfile($filePath);
+    exit;
+}
+
+// Route: /image (Serve uploaded images with CORS headers & fallback)
 if ($path === '/image' && $method === 'GET') {
     $file = isset($_GET['file']) ? basename($_GET['file']) : '';
-    $filePath = $uploadDir . '/' . $file;
-    if (!empty($file) && file_exists($filePath)) {
-        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $contentType = 'image/jpeg';
-        if ($ext === 'png') {
-            $contentType = 'image/png';
-        } elseif ($ext === 'gif') {
-            $contentType = 'image/gif';
-        } elseif ($ext === 'webp') {
-            $contentType = 'image/webp';
+    $file = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $file);
+
+    if (!empty($file)) {
+        $filePath = $uploadDir . '/' . $file;
+        if (file_exists($filePath) && !is_dir($filePath)) {
+            serveImageFile($filePath);
         }
-        header("Access-Control-Allow-Origin: *");
-        header("Content-Type: $contentType");
-        header("Content-Length: " . filesize($filePath));
-        // Disable output buffering to prevent memory issues
-        while (ob_get_level()) {
-            ob_end_clean();
+
+        // Cek pencarian file case-insensitive (misal .JPG vs .jpg)
+        $filesInDir = glob($uploadDir . '/*');
+        if ($filesInDir) {
+            foreach ($filesInDir as $fPath) {
+                if (strcasecmp(basename($fPath), $file) === 0) {
+                    serveImageFile($fPath);
+                }
+            }
         }
-        readfile($filePath);
-        exit;
-    } else {
-        sendResponse(false, ['message' => 'File tidak ditemukan.'], 404);
     }
+
+    // Fallback jika file fisik di folder uploads terhapus (akibat restart container Railway):
+    header("Access-Control-Allow-Origin: *");
+    header("Content-Type: image/svg+xml");
+    header("Cache-Control: no-cache, must-revalidate");
+    echo '<?xml version="1.0" encoding="UTF-8"?>
+    <svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="300" fill="#1E293B"/>
+      <circle cx="200" cy="130" r="45" fill="#1B5E20" opacity="0.4"/>
+      <path d="M200 60 C160 110, 160 170, 200 200 C240 170, 240 110, 200 60 Z" fill="#4CAF50"/>
+      <path d="M200 90 C185 125, 185 165, 200 185 C215 165, 215 125, 200 90 Z" fill="#81C784"/>
+      <text x="200" y="240" font-family="sans-serif" font-size="14" font-weight="bold" fill="#94A3B8" text-anchor="middle">Gambar Deteksi Padi</text>
+    </svg>';
+    exit;
 }
 
 // ─── Route: /weather/current (PUBLIC - tidak butuh token) ───────────────────
