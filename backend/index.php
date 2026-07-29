@@ -943,14 +943,17 @@ if ($path === '/auth/avatar' && $method === 'POST') {
 
 // Route: /detection (Inference Upload YOLOv12 / Roboflow Workflows & direct detection)
 if ($path === '/detection' && $method === 'POST') {
-    $imageUrl = 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=500';
+    $imageUrl = '';
     $targetPath = '';
+    $ext = 'jpg';
+    $newFilename = 'det_' . uniqid() . '_' . time() . '.' . $ext;
+    $targetPath = $uploadDir . '/' . $newFilename;
     
-    // Simpan gambar jika diunggah
-    if (isset($_FILES['image'])) {
+    // 1. Simpan gambar dari $_FILES['image']
+    if (isset($_FILES['image']) && !empty($_FILES['image']['tmp_name'])) {
         $file = $_FILES['image'];
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        if (empty($ext)) $ext = 'jpg';
+        $origExt = pathinfo($file['name'], PATHINFO_EXTENSION);
+        if (!empty($origExt)) $ext = $origExt;
         $newFilename = 'det_' . uniqid() . '_' . time() . '.' . $ext;
         $targetPath = $uploadDir . '/' . $newFilename;
         
@@ -961,10 +964,26 @@ if ($path === '/detection' && $method === 'POST') {
         if (file_exists($targetPath)) {
             $imageUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
         }
+    } 
+    // 2. Fallback: Simpan dari raw base64 / JSON / php://input jika $_FILES tidak ada
+    else if (!empty($inputData['image_base64']) || !empty($inputData['image'])) {
+        $b64Data = !empty($inputData['image_base64']) ? $inputData['image_base64'] : $inputData['image'];
+        if (is_string($b64Data) && preg_match('/^data:image\/(\w+);base64,/', $b64Data, $m)) {
+            $b64Data = substr($b64Data, strpos($b64Data, ',') + 1);
+        }
+        if (is_string($b64Data)) {
+            $decodedBytes = base64_decode($b64Data);
+            if ($decodedBytes) {
+                file_put_contents($targetPath, $decodedBytes);
+                if (file_exists($targetPath)) {
+                    $imageUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
+                }
+            }
+        }
     }
     
-    if (empty($targetPath) || !file_exists($targetPath)) {
-        sendResponse(false, ['message' => 'File gambar tidak berhasil diunggah.'], 400);
+    if (empty($targetPath) || !file_exists($targetPath) || filesize($targetPath) === 0) {
+        sendResponse(false, ['message' => 'File gambar tidak berhasil diunggah. Pastikan ukuran file di bawah 50MB.'], 400);
     }
 
     // =========================================================================

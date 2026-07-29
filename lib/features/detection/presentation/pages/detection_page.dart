@@ -107,6 +107,7 @@ class _DetectionPageState extends ConsumerState<DetectionPage> {
         'api/detection',
         data: FormData.fromMap({
           'image': file,
+          'image_base64': base64Encode(imageBytes),
         }),
       );
 
