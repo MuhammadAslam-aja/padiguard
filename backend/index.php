@@ -123,12 +123,11 @@ function sendResponse($success, $data = [], $statusCode = 200) {
 }
 
 function getBaseUrl() {
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+    $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+               (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $protocol = $isHttps ? "https" : "http";
     $host = $_SERVER['HTTP_HOST'];
-    $scriptName = dirname($_SERVER['SCRIPT_NAME']);
-    // Normalisasi slash
-    $scriptDir = str_replace('\\', '/', $scriptName);
-    return $protocol . "://" . $host . rtrim($scriptDir, '/');
+    return $protocol . "://" . $host;
 }
 
 function extractPestNameFromText($text) {
@@ -921,10 +920,15 @@ if ($path === '/auth/avatar' && $method === 'POST') {
     
     $file = $_FILES['avatar'];
     $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    if (empty($ext)) $ext = 'jpg';
     $newFilename = 'avatar_' . $currentUser['id'] . '_' . time() . '.' . $ext;
     $targetPath = $uploadDir . '/' . $newFilename;
     
-    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+    $moved = @move_uploaded_file($file['tmp_name'], $targetPath) || 
+             @copy($file['tmp_name'], $targetPath) || 
+             (file_exists($file['tmp_name']) && file_put_contents($targetPath, file_get_contents($file['tmp_name'])) !== false);
+
+    if ($moved) {
         $avatarUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
         
         $stmt = $pdo->prepare("UPDATE `users` SET `avatar` = ? WHERE `id` = ?");
@@ -933,7 +937,7 @@ if ($path === '/auth/avatar' && $method === 'POST') {
         $currentUser['avatar'] = $avatarUrl;
         sendResponse(true, ['user' => $currentUser, 'message' => 'Foto profil berhasil diubah.']);
     } else {
-        sendResponse(false, ['message' => 'Gagal mengunggah file.'], 500);
+        sendResponse(false, ['message' => 'Gagal mengunggah file avatar.'], 500);
     }
 }
 
@@ -946,9 +950,15 @@ if ($path === '/detection' && $method === 'POST') {
     if (isset($_FILES['image'])) {
         $file = $_FILES['image'];
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        if (empty($ext)) $ext = 'jpg';
         $newFilename = 'det_' . uniqid() . '_' . time() . '.' . $ext;
         $targetPath = $uploadDir . '/' . $newFilename;
-        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+        
+        @move_uploaded_file($file['tmp_name'], $targetPath) || 
+        @copy($file['tmp_name'], $targetPath) || 
+        (file_exists($file['tmp_name']) && file_put_contents($targetPath, file_get_contents($file['tmp_name'])));
+
+        if (file_exists($targetPath)) {
             $imageUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
         }
     }
