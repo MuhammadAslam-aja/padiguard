@@ -1,0 +1,73 @@
+# ========================
+# Environment & Secrets
+# ========================
+.env
+*.env.local
+
+# ========================
+# Upload folder - JANGAN commit gambar user & dataset (bisa ratusan MB/GB!)
+# ========================
+backend/uploads/
+
+# ========================
+# Model weights besar (5-50 MB per file - gunakan Git LFS atau simpan di Drive)
+# ========================
+*.pt
+*.weights
+*.onnx
+*.tflite
+
+# ========================
+# Gambar Padi (folder dataset besar)
+# ========================
+Gambar Padi/
+
+# ========================
+# Flutter / Dart build artifacts
+# ========================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+*.class
+*.jar
+*.war
+*.ear
+
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg
+*.egg-info/
+dist/
+*.so
+.pytest_cache/
+
+# ========================
+# Temporary & Logs
+# ========================
+kematangan_upload/
+yolov12_upload/
+grep.exe.stackdump
+backend/request_log.txt
+*.log
+*.stackdump
+
+# ========================
+# OS Files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
