@@ -600,60 +600,14 @@ $scriptName = $_SERVER['SCRIPT_NAME']; // "/KLASIFIKASI JENIS HAMA DAN KEMATANGA
 $requestUri = $_SERVER['REQUEST_URI'];
 $decodedUri = rawurldecode($requestUri);
 $requestPath = strtok($decodedUri, '?');
-// Jika request bukan untuk /api, layani Flutter Web UI dari folder web_app
+// Jika request bukan untuk /api, layani Flutter Web UI dari backend/index.html
 if (stripos($requestPath, '/api') === false) {
-    $candidateWebDirs = [
-        __DIR__ . '/web_app',
-        __DIR__ . '/../web_app',
-        '/app/web_app',
-        '/app/backend/web_app'
-    ];
-    $webDir = null;
-    foreach ($candidateWebDirs as $candidate) {
-        if (file_exists($candidate) && is_dir($candidate) && file_exists($candidate . '/index.html')) {
-            $webDir = $candidate;
-            break;
-        }
-    }
-
-    if ($webDir) {
-        $file = ltrim($requestPath, '/');
-        $filePath = $webDir . '/' . $file;
-        
-        if (!empty($file) && file_exists($filePath) && !is_dir($filePath)) {
-            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-            $contentTypes = [
-                'html' => 'text/html; charset=UTF-8',
-                'js'   => 'application/javascript',
-                'json' => 'application/json',
-                'css'  => 'text/css',
-                'png'  => 'image/png',
-                'jpg'  => 'image/jpeg',
-                'jpeg' => 'image/jpeg',
-                'gif'  => 'image/gif',
-                'svg'  => 'image/svg+xml',
-                'wasm' => 'application/wasm',
-                'ttf'  => 'font/ttf',
-                'otf'  => 'font/otf',
-                'woff' => 'font/woff',
-                'woff2'=> 'font/woff2',
-            ];
-            $contentType = isset($contentTypes[$ext]) ? $contentTypes[$ext] : 'application/octet-stream';
-            header("Access-Control-Allow-Origin: *");
-            header("Content-Type: $contentType");
-            header("Content-Length: " . filesize($filePath));
-            readfile($filePath);
-            exit;
-        } else {
-            // SPA fallback ke index.html
-            $indexHtml = $webDir . '/index.html';
-            if (file_exists($indexHtml)) {
-                header("Access-Control-Allow-Origin: *");
-                header("Content-Type: text/html; charset=UTF-8");
-                readfile($indexHtml);
-                exit;
-            }
-        }
+    $indexHtml = __DIR__ . '/index.html';
+    if (file_exists($indexHtml)) {
+        header("Access-Control-Allow-Origin: *");
+        header("Content-Type: text/html; charset=UTF-8");
+        readfile($indexHtml);
+        exit;
     }
 }
 
