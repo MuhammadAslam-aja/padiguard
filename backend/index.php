@@ -501,7 +501,7 @@ Jawab HANYA dalam format JSON ini (tanpa teks lain):
         "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 128]
     ];
     
-    $models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    $models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     $response = null;
     $httpCode = 0;
     
@@ -589,7 +589,7 @@ Jika gambar adalah sawah sehat, sawah normal, atau tidak ada tanda hama, kembali
         ]
     ];
     
-    $models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    $models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     $response = null;
     $httpCode = 0;
     
@@ -1097,96 +1097,84 @@ if ($path === '/detection' && $method === 'POST') {
     // LANGKAH 1: CEK HAMA DI ROBOFLOW DAHULU (Roboflow AI Models)
     // =========================================================================
     $predictions = [];
+    $predictions = [];
     $roboflowSuccess = false;
     $modelUsed = 'none';
 
     $newApiKey        = "nsRtr9srM0kLon24RWka";
     $newWorkspaceName = "muhammad-aslam-s-workspace";
-    $yolov12WorkflowId = "jenis-hama-vjenis-hama-hlar6-1-yolov12n-t2-logic";
-    $yolo11WorkflowId  = "jenis-hama-hlar6";
-    $newModelId       = "jenis-hama-hlar6";
-    $newModelVersion  = "1";
-
-    $oldApiKey       = "7QZqUHdDrjwCkhGmXrPd";
-    $oldModelId      = "rice-pest-dmnia-hy85k-2";
-    $oldModelVersion = "1";
+    $pestModelId      = "jenis-hama-hlar6";
+    $pestModelVersion = "1";
+    $maturModelId     = "kematangan-ieouc";
+    $maturModelVersion = "1";
 
     $base64Image = base64_encode(file_get_contents($targetPath));
 
-    // 1A. Workflow YOLOv12
-    $yolov12WorkflowUrl = "https://serverless.roboflow.com/{$newWorkspaceName}/workflows/{$yolov12WorkflowId}";
-    $yolov12WfPayload = [
-        "api_key" => $newApiKey,
-        "inputs" => ["image" => ["type" => "base64", "value" => $base64Image]]
-    ];
-    $ch = curl_init($yolov12WorkflowUrl);
+    // 1A. Direct Roboflow Pest Model (jenis-hama-hlar6/1)
+    $pestUrl = "https://detect.roboflow.com/{$pestModelId}/{$pestModelVersion}?api_key={$newApiKey}&name=image.png";
+    $ch = curl_init($pestUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($yolov12WfPayload));
-    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $base64Image);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    $response = curl_exec($ch);
+    $resPest = curl_exec($ch);
     curl_close($ch);
-    if ($response) {
-        $resDec = json_decode($response, true);
-        if ($resDec && !isset($resDec['error']) && !isset($resDec['error_type'])) {
-            $preds = findPredictionsInArray($resDec);
-            if (!empty($preds)) {
-                $predictions = $preds;
-                $roboflowSuccess = true;
-                $modelUsed = 'yolov12_workflow';
-            }
+    if ($resPest) {
+        $dec = json_decode($resPest, true);
+        if (isset($dec['predictions']) && is_array($dec['predictions'])) {
+            $predictions = array_merge($predictions, $dec['predictions']);
+            $roboflowSuccess = true;
+            $modelUsed = 'roboflow_pest_direct';
         }
     }
 
-    // 1B. Fallback Workflow YOLO11
+    // 1B. Direct Roboflow Maturity Model (kematangan-ieouc/1)
+    $maturUrl = "https://detect.roboflow.com/{$maturModelId}/{$maturModelVersion}?api_key={$newApiKey}&name=image.png";
+    $ch = curl_init($maturUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $base64Image);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $resMat = curl_exec($ch);
+    curl_close($ch);
+    if ($resMat) {
+        $dec = json_decode($resMat, true);
+        if (isset($dec['predictions']) && is_array($dec['predictions'])) {
+            $predictions = array_merge($predictions, $dec['predictions']);
+            $roboflowSuccess = true;
+            $modelUsed = ($modelUsed === 'roboflow_pest_direct') ? 'roboflow_both_direct' : 'roboflow_kematangan_direct';
+        }
+    }
+
+    // 1C. Fallback ke Workflow jika direct API tidak memberikan hasil
     if (!$roboflowSuccess) {
-        $newWorkflowUrl = "https://serverless.roboflow.com/{$newWorkspaceName}/workflows/{$yolo11WorkflowId}";
-        $newWfPayload = [
+        $yolov12WorkflowUrl = "https://serverless.roboflow.com/{$newWorkspaceName}/workflows/jenis-hama-vjenis-hama-hlar6-1-yolov12n-t2-logic";
+        $yolov12WfPayload = [
             "api_key" => $newApiKey,
             "inputs" => ["image" => ["type" => "base64", "value" => $base64Image]]
         ];
-        $ch = curl_init($newWorkflowUrl);
+        $ch = curl_init($yolov12WorkflowUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($newWfPayload));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($yolov12WfPayload));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $response = curl_exec($ch);
         curl_close($ch);
         if ($response) {
             $resDec = json_decode($response, true);
-            if ($resDec && !isset($resDec['error']) && !isset($resDec['error_type'])) {
+            if ($resDec && !isset($resDec['error'])) {
                 $preds = findPredictionsInArray($resDec);
                 if (!empty($preds)) {
                     $predictions = $preds;
                     $roboflowSuccess = true;
-                    $modelUsed = 'yolo11_workflow';
+                    $modelUsed = 'yolov12_workflow';
                 }
-            }
-        }
-    }
-
-    // 1C. Fallback Direct Roboflow Model
-    if (!$roboflowSuccess) {
-        $newDirectUrl = "https://detect.roboflow.com/{$newModelId}/{$newModelVersion}?api_key={$newApiKey}&name=image.png";
-        $ch = curl_init($newDirectUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $base64Image);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        if ($response) {
-            $resDec = json_decode($response, true);
-            if ($resDec && isset($resDec['predictions'])) {
-                $predictions = $resDec['predictions'];
-                $roboflowSuccess = true;
-                $modelUsed = 'new_direct';
             }
         }
     }
