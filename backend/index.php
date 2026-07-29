@@ -1009,26 +1009,28 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // VALIDASI AWAL: Pastikan gambar adalah tanaman padi sebelum diproses
+    // VALIDASI UTAMA: GEMINI VISION AI DIJALANKAN PERTAMA KALI (LAYER 1)
     // =========================================================================
     $GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: 'AQ.Ab8RN6IATsh92P1ESPHS6B4KI0ZPs5' . '_r3f-uqAJ8uWDn1mA1Uw'; // Gemini API Key
     
-    // LAYER 1: Validasi berbasis analisis piksel (cepat, tanpa API)
+    // LAYER 1 (UTAMA): Kirim gambar ke Gemini AI terlebih dahulu untuk analisis AI visual murni
+    $geminiValidation = callGeminiRiceValidator($targetPath, $GEMINI_API_KEY);
+    if ($geminiValidation !== null && isset($geminiValidation['is_rice_plant'])) {
+        if ($geminiValidation['is_rice_plant'] === false) {
+            @unlink($targetPath);
+            $reason = !empty($geminiValidation['reason']) ? $geminiValidation['reason'] : 'bukan tanaman padi';
+            sendResponse(false, [
+                'message' => "Gambar ditolak oleh Gemini AI ($reason). Harap unggah foto tanaman padi yang valid (sawah/batang/daun/malai padi)."
+            ], 400);
+        }
+    }
+    
+    // LAYER 2 (CADANGAN / FALLBACK): Validasi berbasis analisis piksel YCbCr
     $pixelCheck = isRicePlantImage($targetPath);
     if (!$pixelCheck['valid']) {
         @unlink($targetPath);
         sendResponse(false, [
             'message' => 'Gambar tidak valid: ' . $pixelCheck['reason'] . ' Harap unggah foto tanaman padi yang jelas (sawah/batang/daun/malai padi).'
-        ], 400);
-    }
-    
-    // LAYER 2: Validasi tambahan via Gemini AI (jika API key tersedia)
-    $geminiValidation = callGeminiRiceValidator($targetPath, $GEMINI_API_KEY);
-    if ($geminiValidation !== null && $geminiValidation['is_rice_plant'] === false) {
-        @unlink($targetPath);
-        $reason = $geminiValidation['reason'] ?? 'bukan tanaman padi';
-        sendResponse(false, [
-            'message' => "Gambar tidak dikenali sebagai tanaman padi ($reason). Harap unggah foto tanaman padi yang valid."
         ], 400);
     }
 
