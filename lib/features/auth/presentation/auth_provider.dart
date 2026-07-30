@@ -63,11 +63,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = AuthState.unauthenticated();
       }
     } catch (e) {
-      // Jika timeout atau error jaringan -> langsung ke halaman login
-      try {
-        await secureStorage.delete(AppConstants.keyToken);
-      } catch (_) {}
-      state = AuthState.unauthenticated();
+      // Jika timeout atau error jaringan saat refresh halaman / reconnect:
+      // Jangan hapus token jika data user tersimpan di SharedPreferences!
+      final sharedPrefs = _ref.read(sharedPrefsProvider);
+      final savedRole  = sharedPrefs.getString(AppConstants.keyUserRole);
+      final savedName  = sharedPrefs.getString(AppConstants.keyUserName);
+      final savedEmail = sharedPrefs.getString(AppConstants.keyUserEmail);
+      if (savedName != null && savedName.isNotEmpty && savedRole != null && savedRole.isNotEmpty) {
+        final fallbackUser = UserModel(
+          id: 'local_user',
+          name: savedName,
+          email: savedEmail ?? '',
+          role: savedRole,
+          createdAt: DateTime.now().toIso8601String(),
+          avatar: '',
+        );
+        state = AuthState.authenticated(fallbackUser);
+      } else {
+        try {
+          await secureStorage.delete(AppConstants.keyToken);
+        } catch (_) {}
+        state = AuthState.unauthenticated();
+      }
     }
   }
 

@@ -48,7 +48,7 @@ class DetectionDetailSheet extends StatelessWidget {
   void _showDeleteConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
           'Hapus Data Deteksi',
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
@@ -56,15 +56,17 @@ class DetectionDetailSheet extends StatelessWidget {
         content: const Text('Apakah Anda yakin ingin menghapus data deteksi ini dari riwayat? Tindakan ini tidak dapat dibatalkan.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
               final idToDelete = detection['id'];
-              Navigator.of(context, rootNavigator: true).pop(); // Tutup dialog konfirmasi
-              Navigator.of(context, rootNavigator: true).pop(); // Tutup modal sheet detail
-              onDelete(idToDelete); // Panggil fungsi hapus setelah dialog/sheet tertutup bersih
+              Navigator.of(dialogContext).pop();
+              if (Navigator.canPop(context)) {
+                Navigator.of(context).pop();
+              }
+              onDelete(idToDelete);
             },
             style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
             child: const Text('Hapus'),

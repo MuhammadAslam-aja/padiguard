@@ -243,7 +243,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 final pass = passwordController.text;
                 final role = selectedRole;
                 
-                Navigator.of(context, rootNavigator: true).pop();
+                Navigator.pop(context);
                 _addUser(name, email, pass, role);
               },
               child: const Text('Tambah'),
@@ -329,7 +329,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 final role = selectedRole;
                 final pass = passwordController.text;
                 
-                Navigator.of(context, rootNavigator: true).pop();
+                Navigator.pop(context);
                 _editUser(userId, name, email, role, pass);
               },
               child: const Text('Simpan'),
@@ -343,15 +343,15 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   void _showDeleteConfirmation(Map<String, dynamic> user) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text('Hapus User', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         content: Text('Apakah Anda yakin ingin menghapus user "${user['name']}"? Semua data deteksinya juga akan terpengaruh.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Batal')),
           TextButton(
             onPressed: () {
               final userId = user['id'];
-              Navigator.of(context, rootNavigator: true).pop();
+              Navigator.of(dialogContext).pop();
               _deleteUser(userId);
             },
             style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
