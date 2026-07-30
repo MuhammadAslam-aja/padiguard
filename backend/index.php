@@ -334,8 +334,8 @@ function normalizeUrls($data) {
             } elseif (is_string($value)) {
                 if (preg_match('#(?:^|/|uploads/)(det_[^?\s]+|avatar_[^?\s]+|ds_[^?\s]+)#', $value, $matches)) {
                     $value = $baseUrl . '/api/image?file=' . $matches[1];
-                } elseif (preg_match('#http://(?:localhost|127\.0\.0\.1|\d+\.\d+\.\d+\.\d+)(?::\d+)?/[^/]+/backend/(api/image\?file=[^\s]+)#i', $value, $matches)) {
-                    $value = $baseUrl . '/' . $matches[1];
+                } elseif (preg_match('#https?://[^/\s]+/(?:api/)?(image\?file=[^\s]+)#i', $value, $matches)) {
+                    $value = $baseUrl . '/api/' . $matches[1];
                 }
             }
         }
@@ -842,6 +842,27 @@ if ($path === '/detection' && $method === 'POST') {
                 $yMin = max(0.0, min(1.0, ($y - $h/2) / $imgH));
                 $xMax = max(0.0, min(1.0, ($x + $w/2) / $imgW));
                 $yMax = max(0.0, min(1.0, ($y + $h/2) / $imgH));
+
+                // SMART BOUNDING BOX ADAPTER: Jika bounding box hama terlalu kecil (< 35%) atau menempel di pojok,
+                // perluas dan terpusatkan agar jelas dan mudah dibaca oleh Petani
+                $boxW = $xMax - $xMin;
+                $boxH = $yMax - $yMin;
+                if ($boxW < 0.35 || $boxH < 0.35 || $xMin < 0.08 || $yMin < 0.08) {
+                    $centerX = ($xMin + $xMax) / 2;
+                    $centerY = ($yMin + $yMax) / 2;
+                    if ($centerX < 0.35 && $centerY < 0.35) {
+                        // Jika di pojok atas, pusatkan ke area dominan tengah gambar
+                        $xMin = 0.15; $yMin = 0.15; $xMax = 0.85; $yMax = 0.85;
+                    } else {
+                        $halfW = max(0.30, $boxW * 1.5);
+                        $halfH = max(0.30, $boxH * 1.5);
+                        $xMin = max(0.08, min(0.35, $centerX - $halfW));
+                        $yMin = max(0.08, min(0.35, $centerY - $halfH));
+                        $xMax = min(0.92, max(0.65, $centerX + $halfW));
+                        $yMax = min(0.92, max(0.65, $centerY + $halfH));
+                    }
+                }
+
                 $boxes[] = [
                     'label' => "$foundPest (" . round($conf * 100) . "%)",
                     'xMin' => $xMin, 'yMin' => $yMin, 'xMax' => $xMax, 'yMax' => $yMax,
@@ -908,7 +929,7 @@ if ($path === '/detection' && $method === 'POST') {
                 $hamaConf = min(0.96, round(0.85 + ((15 - $realDistance) / 100), 2));
                 $boxes[] = [
                     'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                    'xMin' => 0.1, 'yMin' => 0.1, 'xMax' => 0.9, 'yMax' => 0.9,
+                    'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
                     'isHama' => true
                 ];
             }
