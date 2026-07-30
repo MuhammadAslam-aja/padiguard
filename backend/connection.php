@@ -289,9 +289,14 @@ try {
     if ($dsCount < 1376) {
         $seedFile = __DIR__ . '/dataset_seed.sql';
         if (file_exists($seedFile)) {
-            $sqlSeed = file_get_contents($seedFile);
-            if (!empty($sqlSeed)) {
-                $pdo->exec($sqlSeed);
+            $sqlLines = file($seedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($sqlLines as $line) {
+                $line = trim($line);
+                if (!empty($line) && (strpos($line, 'INSERT') === 0 || strpos($line, 'CREATE') === 0)) {
+                    try {
+                        $pdo->exec($line);
+                    } catch (\Exception $ex) {}
+                }
             }
         }
     }
