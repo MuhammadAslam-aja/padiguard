@@ -324,36 +324,42 @@ try {
             
             $stmtCheck = $pdo->prepare("SELECT COUNT(*) FROM `dataset` WHERE `id` = ?");
             $stmtInsert = $pdo->prepare("INSERT INTO `dataset` (`id`, `label`, `imageUrl`, `hash`) VALUES (?, ?, ?, ?)");
+            $stmtUpdateHash = $pdo->prepare("UPDATE `dataset` SET `hash` = ? WHERE `id` = ? AND (`hash` IS NULL OR `hash` = '')");
             
             foreach ($sampleFiles as $samplePath) {
                 $filename = basename($samplePath);
                 $dsId = 'ds_' . md5($filename);
+                $targetPath = $uploadsDir . '/' . $filename;
+                if (!file_exists($targetPath)) {
+                    @copy($samplePath, $targetPath);
+                }
+                
+                $hash = getAverageHash($targetPath);
                 
                 $stmtCheck->execute([$dsId]);
                 if ($stmtCheck->fetchColumn() == 0) {
-                    $targetPath = $uploadsDir . '/' . $filename;
-                    if (!file_exists($targetPath)) {
-                        @copy($samplePath, $targetPath);
-                    }
-                    
                     $label = 'Padi Sehat';
-                    if (strpos($filename, 'wereng_coklat') !== false) {
-                        $label = 'Setengah Matang - Wereng Coklat (Spot Hopperburn)';
-                    } elseif (strpos($filename, 'penggerek_batang') !== false) {
-                        $label = 'Setengah Matang - Penggerek Batang';
-                    } elseif (strpos($filename, 'rumput') !== false) {
-                        $label = 'Rumput / Gulma (Bukan Padi)';
-                    } elseif (strpos($filename, 'matang_-_sehat') !== false) {
+                    $fnLower = strtolower($filename);
+                    if (strpos($fnLower, 'wereng_coklat') !== false) {
+                        $label = 'Wereng Coklat';
+                    } elseif (strpos($fnLower, 'penggerek_batang') !== false) {
+                        $label = 'Penggerek Batang';
+                    } elseif (strpos($fnLower, 'rumput') !== false) {
+                        $label = 'Rumput / Gulma';
+                    } elseif (strpos($fnLower, 'matang_-_sehat') !== false) {
                         $label = 'Matang - Sehat';
-                    } elseif (strpos($filename, 'mentah_-_sehat') !== false) {
+                    } elseif (strpos($fnLower, 'mentah_-_sehat') !== false) {
                         $label = 'Mentah - Sehat';
-                    } elseif (strpos($filename, 'setengah_matang_-_sehat') !== false) {
+                    } elseif (strpos($fnLower, 'setengah_matang_-_sehat') !== false) {
                         $label = 'Setengah Matang - Sehat';
+                    } elseif (strpos($fnLower, 'padi_sehat') !== false) {
+                        $label = 'Padi Sehat';
                     }
                     
                     $imageUrl = 'uploads/' . $filename;
-                    $hash = getAverageHash($targetPath);
                     $stmtInsert->execute([$dsId, $label, $imageUrl, $hash]);
+                } else if ($hash) {
+                    $stmtUpdateHash->execute([$hash, $dsId]);
                 }
             }
         }

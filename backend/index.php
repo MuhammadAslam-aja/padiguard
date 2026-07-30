@@ -278,6 +278,25 @@ function isRicePlantImage($imagePath) {
     }
     if (!$img) return ['valid' => false, 'reason' => 'Gagal membuka file gambar'];
     
+    // 0. CEK TERLEBIH DAHULU KE DATABASE DATASET HOSTING (Visual Hash Matching)
+    global $pdo;
+    if (isset($pdo) && $pdo) {
+        $uploadHash = getAverageHash($imagePath);
+        if ($uploadHash) {
+            try {
+                $stmtDsHashes = $pdo->query("SELECT `id`, `label`, `hash` FROM `dataset` WHERE `hash` IS NOT NULL AND `hash` != ''");
+                $dsRows = $stmtDsHashes->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($dsRows as $row) {
+                    $dist = getHammingDistance($uploadHash, $row['hash']);
+                    if ($dist <= 18) { // Visual similarity match dengan gambar dataset hosting
+                        @imagedestroy($img);
+                        return ['valid' => true, 'reason' => ''];
+                    }
+                }
+            } catch (\Exception $ex) {}
+        }
+    }
+
     $w = imagesx($img);
     $h = imagesy($img);
     
@@ -303,12 +322,13 @@ function isRicePlantImage($imagePath) {
             $g = ($rgb >> 8) & 0xFF;
             $b = $rgb & 0xFF;
             
-            // 1. Karakteristik Tanaman Padi Asli (daun hijau segar, gabah kuning, batang kering, sawah)
-            $isGreenPadi  = ($g > $r + 10 && $g > $b + 20 && $g > 40 && $b < 160);
-            $isYellowPadi = ($r > 100 && $g > 85 && $b < 110 && ($r - $b) > 20 && ($g - $b) > 10);
-            $isDryPadi    = ($r > 70 && $g > 55 && $b < 100 && $r >= $g && ($r - $b) > 15);
+            // 1. Karakteristik Tanaman Padi Asli (daun hijau segar, gabah kuning, batang kering, sawah, kecoklatan)
+            $isGreenPadi  = ($g >= $r * 0.85 && $g >= $b && $g > 20); // Hijau segar / kekuningan
+            $isYellowPadi = ($r > 55 && $g > 45 && $b < 150 && ($r + $g) > 1.6 * $b); // Padi matang / gabah kuning
+            $isDryPadi    = ($r > 35 && $g > 30 && $b < 120 && $r >= $g * 0.65 && ($r - $b) > 4); // Batang kering / jerami / bercak daun
+            $isDarkPlant  = ($g >= $b && ($r + $g + $b) > 15 && ($r + $g + $b) < 230 && $g >= $r * 0.6); // Daun rimbun / bayangan
             
-            $isRicePixel = ($isGreenPadi || $isYellowPadi || $isDryPadi);
+            $isRicePixel = ($isGreenPadi || $isYellowPadi || $isDryPadi || $isDarkPlant);
             if ($isRicePixel) {
                 $riceColorCount++;
             }
@@ -360,29 +380,28 @@ function isRicePlantImage($imagePath) {
     $riceRatio     = $riceColorCount / $totalSamples;
     
     // A. TOLAK jika terdeteksi kulit manusia (wajah / tubuh / tangan / selfie webcam)
-    // Jika gambar sudah memiliki warna padi/sawah yang cukup ($riceRatio >= 0.05), toleransi skinRatio dinaikkan ke 35% agar sawah padi kuning tidak salah terdeteksi
-    $skinThreshold = ($riceRatio >= 0.05) ? 0.35 : 0.05;
+    $skinThreshold = ($riceRatio >= 0.03) ? 0.40 : 0.05;
     if ($skinRatio >= $skinThreshold) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia, bukan tanaman padi.'];
     }
     
-    // B. TOLAK jika ada pakaian buatan manusia > 10% piksel
-    if ($clothingRatio > 0.10 && $riceRatio < 0.10) {
+    // B. TOLAK jika ada pakaian buatan manusia > 15% piksel
+    if ($clothingRatio > 0.15 && $riceRatio < 0.05) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian/baju), bukan tanaman padi.'];
     }
     
-    // C. TOLAK jika > 60% background dokumen/UI/screenshot (putih/hitam solid)
-    if ($docRatio > 0.60) {
+    // C. TOLAK jika > 75% background dokumen/UI/screenshot (putih/hitam solid)
+    if ($docRatio > 0.75) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos, bukan tanaman padi.'];
     }
     
-    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 65% dan padi < 8%)
-    if (($blueRatio + $grayRatio) > 0.65 && $riceRatio < 0.08) {
+    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 80% dan padi < 2%)
+    if (($blueRatio + $grayRatio) > 0.80 && $riceRatio < 0.02) {
         return ['valid' => false, 'reason' => 'Gambar didominasi langit atau objek buatan, bukan tanaman padi.'];
     }
     
-    // E. HARUS memiliki minimal 8% piksel bernuansa tanaman padi / sawah (daun/batang/gabah)
-    if ($riceRatio < 0.08) {
+    // E. HARUS memiliki minimal 1.5% piksel bernuansa tanaman padi / sawah (daun/batang/gabah)
+    if ($riceRatio < 0.015) {
         return ['valid' => false, 'reason' => 'Gambar tidak terdeteksi mengandung tanaman padi (tidak ada daun, batang, gabah, atau sawah).'];
     }
     
