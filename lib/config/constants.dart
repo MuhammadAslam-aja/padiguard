@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const String appName = 'PadiGuard';
@@ -6,7 +6,7 @@ class AppConstants {
   
   // API Config
   static const bool useMockApi = false; // Set to true to run offline mock simulator
-  static const String defaultBaseUrl = 'https://tirza-padiguard-production.up.railway.app/api/';
+  static const String defaultBaseUrl = 'https://padiguard-tirza.up.railway.app/api/';
 
   /// Base URL dinamis: otomatis menyesuaikan domain/IP/Ngrok/Railway saat diakses lewat web
   static String get baseUrl {
@@ -123,3 +123,4 @@ class AppConstants {
     },
   };
 }
+

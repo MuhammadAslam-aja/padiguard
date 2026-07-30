@@ -67,7 +67,8 @@ try {
             $tempPdo->exec("CREATE DATABASE IF NOT EXISTS `$db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             $pdo = new PDO($dsn, $user, $pass, $options);
         } catch (\PDOException $ex) {
-            header('Content-Type: application/json', true, 500);
+            while (ob_get_level() > 0) @ob_end_clean();
+            if (!headers_sent()) header('Content-Type: application/json', true, 500);
             echo json_encode([
                 'success' => false,
                 'message' => 'Koneksi database MySQL gagal. Pastikan Laragon MySQL aktif! Error: ' . $ex->getMessage()
@@ -75,7 +76,8 @@ try {
             exit;
         }
     } else {
-        header('Content-Type: application/json', true, 500);
+        while (ob_get_level() > 0) @ob_end_clean();
+        if (!headers_sent()) header('Content-Type: application/json', true, 500);
         echo json_encode([
             'success' => false,
             'message' => 'Koneksi database Railway gagal. Cek konfigurasi MySQL di Railway dashboard. Error: ' . $e->getMessage()
@@ -281,10 +283,10 @@ try {
     $pdo->exec("UPDATE `model_performance` SET `accuracy` = 0.962, `precision` = 0.948, `recall` = 0.938, `f1` = 0.943");
 } catch (\PDOException $ex) {}
 
-// Auto-seed dataset_seed.sql (seluruh 1376 hash dataset) jika dataset di DB < 100
+// Auto-seed dataset_seed.sql (seluruh 1,376 hash dataset) jika dataset di DB < 1376
 try {
     $dsCount = (int)$pdo->query("SELECT COUNT(*) FROM `dataset`")->fetchColumn();
-    if ($dsCount < 100) {
+    if ($dsCount < 1376) {
         $seedFile = __DIR__ . '/dataset_seed.sql';
         if (file_exists($seedFile)) {
             $sqlSeed = file_get_contents($seedFile);

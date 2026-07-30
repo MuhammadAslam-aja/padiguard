@@ -1,9 +1,5 @@
 <?php
-ini_set('output_buffering', '4096');
 ob_start();
-// index.php - Router utama API PHP PadiGuard (MySQL Laragon & Railway Production)
-// Version: 2.4.0-railway-parity (Deterministic, Environment-driven, Precision-calibrated)
-
 error_reporting(0);
 ini_set('display_errors', 0);
 date_default_timezone_set('Asia/Jakarta');
@@ -85,8 +81,10 @@ function sendResponse($success, $data = [], $statusCode = 200) {
         @ob_end_clean();
     }
     http_response_code($statusCode);
-    header("Access-Control-Allow-Origin: *");
-    header("Content-Type: application/json; charset=UTF-8");
+    if (!headers_sent()) {
+        header("Access-Control-Allow-Origin: *");
+        header("Content-Type: application/json; charset=UTF-8");
+    }
     $response = array_merge(['success' => $success], $data);
     $response = normalizeUrls($response);
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -416,7 +414,7 @@ if ($path === '/version' && $method === 'GET') {
     sendResponse(true, [
         'version'     => '2.4.0-railway-parity',
         'build'       => '2026-07-30.01',
-        'environment' => getEnvVar('RAILWAY_ENVIRONMENT') ?: 'local',
+        'environment' => getEnvVar('RAILWAY_ENVIRONMENT') ? 'production' : 'local',
         'features'    => [
             'gemini_validator' => true,
             'roboflow_yolov12' => true,
@@ -525,9 +523,11 @@ function serveImageFile($filePath) {
         $contentType = 'image/svg+xml';
     }
     while (ob_get_level() > 0) @ob_end_clean();
-    header("Access-Control-Allow-Origin: *");
-    header("Content-Type: $contentType");
-    header("Content-Length: " . filesize($filePath));
+    if (!headers_sent()) {
+        header("Access-Control-Allow-Origin: *");
+        header("Content-Type: $contentType");
+        header("Content-Length: " . filesize($filePath));
+    }
     readfile($filePath);
     exit;
 }
