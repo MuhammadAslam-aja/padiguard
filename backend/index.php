@@ -1049,7 +1049,7 @@ if ($path === '/detection/history' && $method === 'GET') {
         $item['boundingBoxes'] = json_decode($item['boundingBoxes'], true);
     }
     
-    sendResponse(true, ['history' => $list]);
+    sendResponse(true, ['history' => $list, 'detections' => $list]);
 }
 
 // Route: /detection/{id} (Detail & Delete)
@@ -1074,24 +1074,143 @@ if ($detectionId && $method === 'DELETE') {
     sendResponse(true, ['message' => 'Data deteksi berhasil dihapus.']);
 }
 
-// 7. ADMIN ENDPOINTS GUARD
+// 7. ADMIN ENDPOINTS GUARD & ROUTES
 $currentUser = verifyTokenHeader();
 
 // Route: /admin/dashboard
 if ($path === '/admin/dashboard' && $method === 'GET') {
-    $totalDetections = $pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
-    $totalUsers = $pdo->query("SELECT COUNT(*) FROM `users` WHERE `role` = 'petani'")->fetchColumn();
+    $totalDetections = (int)$pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
+    $totalUsers = (int)$pdo->query("SELECT COUNT(*) FROM `users` WHERE `role` = 'petani'")->fetchColumn();
     
-    $mostCommonHamaQuery = $pdo->query("SELECT `hamaName`, COUNT(*) as cnt FROM `detections` WHERE `hamaName` IS NOT NULL GROUP BY `hamaName` ORDER BY cnt DESC LIMIT 1")->fetch();
-    $mostCommonHama = $mostCommonHamaQuery ? $mostCommonHamaQuery['hamaName'] : 'Tidak Ada Data';
+    $mostCommonHamaQuery = $pdo->query("SELECT `hamaName`, COUNT(*) as cnt FROM `detections` WHERE `hamaName` IS NOT NULL AND `hamaName` != '' GROUP BY `hamaName` ORDER BY cnt DESC LIMIT 1")->fetch();
+    $mostCommonHama = $mostCommonHamaQuery ? $mostCommonHamaQuery['hamaName'] : 'Tidak Ada / Sehat';
+
+    $dominantMaturityQuery = $pdo->query("SELECT `kematangan`, COUNT(*) as cnt FROM `detections` WHERE `kematangan` IS NOT NULL AND `kematangan` != '' GROUP BY `kematangan` ORDER BY cnt DESC LIMIT 1")->fetch();
+    $dominantMaturity = $dominantMaturityQuery ? $dominantMaturityQuery['kematangan'] : 'Setengah Matang';
+
+    // Hama distribution map
+    $hamaRows = $pdo->query("SELECT `hamaName`, COUNT(*) as cnt FROM `detections` WHERE `hamaName` IS NOT NULL AND `hamaName` != '' GROUP BY `hamaName`")->fetchAll();
+    $hamaDist = [];
+    foreach ($hamaRows as $hr) {
+        $hamaDist[$hr['hamaName']] = (int)$hr['cnt'];
+    }
+
+    // Maturity distribution map
+    $matRows = $pdo->query("SELECT `kematangan`, COUNT(*) as cnt FROM `detections` WHERE `kematangan` IS NOT NULL AND `kematangan` != '' GROUP BY `kematangan`")->fetchAll();
+    $matDist = [];
+    foreach ($matRows as $mr) {
+        $matDist[$mr['kematangan']] = (int)$mr['cnt'];
+    }
+
+    // Weekly detections chart
+    $weekly = [
+        ['day' => 'Sen', 'count' => 0],
+        ['day' => 'Sel', 'count' => 0],
+        ['day' => 'Rab', 'count' => 0],
+        ['day' => 'Kam', 'count' => 0],
+        ['day' => 'Jum', 'count' => 0],
+        ['day' => 'Sab', 'count' => 0],
+        ['day' => 'Min', 'count' => 0]
+    ];
+    $weekRows = $pdo->query("SELECT WEEKDAY(`date`) as wday, COUNT(*) as cnt FROM `detections` GROUP BY wday")->fetchAll();
+    foreach ($weekRows as $wr) {
+        $idx = (int)$wr['wday'];
+        if (isset($weekly[$idx])) {
+            $weekly[$idx]['count'] = (int)$wr['cnt'];
+        }
+    }
 
     sendResponse(true, [
         'stats' => [
-            'totalDetections' => (int)$totalDetections,
-            'totalUsers' => (int)$totalUsers,
-            'mostCommonHama' => $mostCommonHama,
-            'systemAccuracy' => 0.962
+            'totalDetections'       => $totalDetections,
+            'totalUsers'            => $totalUsers,
+            'mostCommonHama'        => $mostCommonHama,
+            'dominantMaturity'      => $dominantMaturity,
+            'systemAccuracy'        => 0.962,
+            'hamaDistribution'      => $hamaDist,
+            'maturityDistribution'  => $matDist,
+            'weeklyDetections'      => $weekly
         ]
+    ]);
+}
+
+// Route: /admin/users (GET & POST)
+if ($path === '/admin/users' && $method === 'GET') {
+    $users = $pdo->query("SELECT `id`, `name`, `email`, `role`, `avatar`, `createdAt` FROM `users` ORDER BY `createdAt` DESC")->fetchAll();
+    sendResponse(true, ['users' => $users]);
+}
+if ($path === '/admin/users' && $method === 'POST') {
+    $name = isset($inputData['name']) ? trim($inputData['name']) : '';
+    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
+    $password = isset($inputData['password']) ? $inputData['password'] : 'password123';
+    $role = isset($inputData['role']) ? trim($inputData['role']) : 'petani';
+    
+    if (empty($name) || empty($email)) {
+        sendResponse(false, ['message' => 'Nama dan email harus diisi.'], 400);
+    }
+    
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM `users` WHERE `email` = ?");
+    $stmt->execute([$email]);
+    if ($stmt->fetchColumn() > 0) {
+        sendResponse(false, ['message' => 'Email sudah terdaftar!'], 400);
+    }
+    
+    $id = 'u_' . uniqid();
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    $avatar = $role === 'admin' 
+        ? 'https://api.dicebear.com/7.x/bottts/png?seed=' . urlencode($name)
+        : 'https://api.dicebear.com/7.x/adventurer/png?seed=' . urlencode($name);
+        
+    $stmt = $pdo->prepare("INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `avatar`) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$id, $name, $email, $hashedPassword, $role, $avatar]);
+    
+    sendResponse(true, ['message' => 'User baru berhasil ditambahkan.', 'userId' => $id], 201);
+}
+
+// Route: /admin/users/{id} (PUT & DELETE)
+$adminUserId = null;
+if (preg_match('/^\/admin\/users\/([^\/]+)$/', $path, $matches)) {
+    $adminUserId = $matches[1];
+}
+if ($adminUserId && $method === 'PUT') {
+    $name = isset($inputData['name']) ? trim($inputData['name']) : '';
+    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
+    $role = isset($inputData['role']) ? trim($inputData['role']) : 'petani';
+    $password = isset($inputData['password']) ? $inputData['password'] : '';
+
+    if (!empty($password)) {
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE `users` SET `name` = ?, `email` = ?, `role` = ?, `password` = ? WHERE `id` = ?");
+        $stmt->execute([$name, $email, $role, $hashed, $adminUserId]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE `users` SET `name` = ?, `email` = ?, `role` = ? WHERE `id` = ?");
+        $stmt->execute([$name, $email, $role, $adminUserId]);
+    }
+    sendResponse(true, ['message' => 'Data user berhasil diperbarui.']);
+}
+if ($adminUserId && $method === 'DELETE') {
+    $stmt = $pdo->prepare("DELETE FROM `users` WHERE `id` = ?");
+    $stmt->execute([$adminUserId]);
+    sendResponse(true, ['message' => 'User berhasil dihapus.']);
+}
+
+// Route: /admin/detections (GET)
+if ($path === '/admin/detections' && $method === 'GET') {
+    $stmt = $pdo->query("SELECT * FROM `detections` ORDER BY `date` DESC");
+    $list = $stmt->fetchAll();
+    foreach ($list as &$item) {
+        $item['boundingBoxes'] = json_decode($item['boundingBoxes'], true);
+    }
+    sendResponse(true, ['detections' => $list, 'history' => $list]);
+}
+
+// Route: /admin/dataset (GET)
+if (($path === '/admin/dataset' || $path === '/dataset') && $method === 'GET') {
+    $dsCount = (int)$pdo->query("SELECT COUNT(*) FROM `dataset`")->fetchColumn();
+    $samples = $pdo->query("SELECT `id`, `label`, `imageUrl`, `createdAt` FROM `dataset` LIMIT 50")->fetchAll();
+    sendResponse(true, [
+        'total' => $dsCount,
+        'dataset' => $samples
     ]);
 }
 
