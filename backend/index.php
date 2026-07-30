@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Buffer output untuk menjamin respon JSON bersih 100% tanpa warning headers
 // index.php - Router utama API PHP PadiGuard (MySQL Laragon & Railway Production)
 // Version: 2.4.0-railway-parity (Deterministic, Environment-driven, Precision-calibrated)
 
@@ -10,8 +11,8 @@ header("ngrok-skip-browser-warning: true");
 
 date_default_timezone_set('Asia/Jakarta');
 
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Matikan agar tidak mengotori output JSON
+error_reporting(0); // Nonaktifkan warning agar output JSON 100% murni untuk API & Flutter
+ini_set('display_errors', 0);
 
 // Tangani Preflight Request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -27,7 +28,6 @@ if (stripos($uriPath, '/api') === false) {
     $file = ltrim($uriPath, '/');
     $filePath = __DIR__ . '/' . $file;
     
-    // Jika file spesifik ada (seperti main.dart.js, flutter.js, assets/..., dll)
     if (!empty($file) && file_exists($filePath) && !is_dir($filePath)) {
         $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
         $contentTypes = [
@@ -52,7 +52,6 @@ if (stripos($uriPath, '/api') === false) {
         readfile($filePath);
         exit;
     } else {
-        // Fallback ke index.html untuk SPA Web UI
         $indexHtml = __DIR__ . '/index.html';
         if (file_exists($indexHtml)) {
             header("Content-Type: text/html; charset=UTF-8");
@@ -67,17 +66,20 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // 4. Hubungkan ke Database (Auto-Migrate & Auto-Seed)
 require_once __DIR__ . '/connection.php';
+require_once __DIR__ . '/inference_engine.php';
 
 // Helper Config Environment Drivers
-$GEMINI_API_KEY  = getEnvVar('GEMINI_API_KEY') ?: getenv('GEMINI_API_KEY');
-$ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY') ?: 'nsRtr9srM0kLon24RWka';
+$GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY');
+$ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY', 'nsRtr9srM0kLon24RWka');
 $ROBOFLOW_TIMEOUT = (int)(getEnvVar('ROBOFLOW_TIMEOUT') ?: 25);
 $HASH_THRESHOLD   = (int)(getEnvVar('HASH_THRESHOLD') ?: 15);
 $APP_DEBUG        = filter_var(getEnvVar('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN);
 
 // 5. Helper Functions
 function sendResponse($success, $data = [], $statusCode = 200) {
+    if (ob_get_length()) ob_clean(); // Bersihkan buffer sebelum kirim JSON
     http_response_code($statusCode);
+    header("Content-Type: application/json; charset=UTF-8");
     $response = array_merge(['success' => $success], $data);
     $response = normalizeUrls($response);
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -88,7 +90,6 @@ function getBaseUrl() {
     $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ? 'https' : 'http';
     $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
     
-    // Jika berjalan di subfolder (Laragon), sertakan subfolder
     $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
     $scriptDir = str_replace('\\', '/', $scriptDir);
     if ($scriptDir !== '/' && $scriptDir !== '.') {
@@ -145,340 +146,14 @@ function verifyTokenHeader() {
     return null;
 }
 
-function extractPestNameFromText($text) {
-    if (empty($text)) return null;
-    $t = strtolower($text);
-    if (strpos($t, 'wereng') !== false || strpos($t, 'hopper') !== false || strpos($t, 'brown planthopper') !== false) {
-        return 'Wereng Coklat';
-    }
-    if (strpos($t, 'walang') !== false || strpos($t, 'sangit') !== false || strpos($t, 'stink bug') !== false) {
-        return 'Walang Sangit';
-    }
-    if (strpos($t, 'penggerek') !== false || strpos($t, 'borer') !== false || strpos($t, 'stem borer') !== false || strpos($t, 'sundep') !== false || strpos($t, 'beluk') !== false) {
-        return 'Penggerek Batang';
-    }
-    if (strpos($t, 'grayak') !== false || strpos($t, 'armyworm') !== false || strpos($t, 'spodoptera') !== false || strpos($t, 'ulat') !== false) {
-        return 'Ulat Grayak';
-    }
-    return null;
-}
-
-function extractMaturityFromText($text) {
-    if (empty($text)) return null;
-    $t = strtolower($text);
-    if (strpos($t, 'setengah') !== false || strpos($t, 'half') !== false || strpos($t, 'medium') !== false) {
-        return 'Setengah Matang';
-    }
-    if (strpos($t, 'matang') !== false || strpos($t, 'ripe') !== false || strpos($t, 'mature') !== false || strpos($t, 'panen') !== false) {
-        return 'Matang';
-    }
-    if (strpos($t, 'mentah') !== false || strpos($t, 'unripe') !== false || strpos($t, 'green') !== false || strpos($t, 'muda') !== false) {
-        return 'Mentah';
-    }
-    return null;
-}
-
-function findPredictionsInArray($arr) {
-    if (!is_array($arr)) return [];
-    if (isset($arr['predictions']) && is_array($arr['predictions'])) {
-        return $arr['predictions'];
-    }
-    foreach ($arr as $k => $v) {
-        if (is_array($v)) {
-            $res = findPredictionsInArray($v);
-            if (!empty($res)) return $res;
-        }
-    }
-    return [];
-}
-
-function analyzeMaturity($imagePath) {
-    if (!file_exists($imagePath)) return 'Mentah';
-    $info = @getimagesize($imagePath);
-    if (!$info) return 'Mentah';
-    
-    $mime = $info['mime'];
-    if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
-        $img = @imagecreatefromjpeg($imagePath);
-    } elseif ($mime == 'image/png') {
-        $img = @imagecreatefrompng($imagePath);
-    } elseif ($mime == 'image/webp') {
-        $img = @imagecreatefromwebp($imagePath);
-    } else {
-        return 'Mentah';
-    }
-    if (!$img) return 'Mentah';
-    
-    $w = imagesx($img);
-    $h = imagesy($img);
-    
-    $greenCount = 0;
-    $yellowCount = 0;
-    $totalCount = 0;
-    
-    $sampleX = 30;
-    $sampleY = 30;
-    $stepX = max(1, (int)($w / $sampleX));
-    $stepY = max(1, (int)($h / $sampleY));
-    
-    for ($x = 0; $x < $w; $x += $stepX) {
-        for ($y = 0; $y < $h; $y += $stepY) {
-            $totalCount++;
-            $rgb = @imagecolorat($img, (int)$x, (int)$y);
-            if ($rgb === false) continue;
-            $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            if ($g > $r && $g > $b && ($g - $r) > 12) {
-                $greenCount++;
-            } elseif ($r > 120 && $g > 110 && ($r - $b) > 35 && ($g - $b) > 25 && abs($r - $g) < 40) {
-                $yellowCount++;
-            }
-        }
-    }
-    @imagedestroy($img);
-    
-    $total = $greenCount + $yellowCount;
-    if ($total < 15) return 'Mentah';
-    
-    $yellowRatio = $yellowCount / $total;
-    if ($yellowRatio > 0.65) {
-        return 'Matang';
-    } elseif ($yellowRatio < 0.35 || $greenCount >= ($yellowCount * 1.5)) {
-        return 'Mentah';
-    } else {
-        return 'Setengah Matang';
-    }
-}
-
-function isRicePlantImage($imagePath) {
-    if (!file_exists($imagePath)) return ['valid' => false, 'reason' => 'File tidak ditemukan'];
-    $info = @getimagesize($imagePath);
-    if (!$info) return ['valid' => false, 'reason' => 'Format file bukan gambar yang valid'];
-    
-    $mime = $info['mime'];
-    if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
-        $img = @imagecreatefromjpeg($imagePath);
-    } elseif ($mime == 'image/png') {
-        $img = @imagecreatefrompng($imagePath);
-    } elseif ($mime == 'image/webp') {
-        $img = @imagecreatefromwebp($imagePath);
-    } else {
-        return ['valid' => false, 'reason' => 'Format gambar harus JPG, PNG, atau WEBP'];
-    }
-    if (!$img) return ['valid' => false, 'reason' => 'Gagal membuka file gambar'];
-    
-    // 0. CEK TERLEBIH DAHULU KE DATABASE DATASET HOSTING (Visual Hash Matching)
-    global $pdo;
-    if (isset($pdo) && $pdo) {
-        $uploadHash = getAverageHash($imagePath);
-        if ($uploadHash) {
-            try {
-                $stmtDsHashes = $pdo->query("SELECT `id`, `label`, `hash` FROM `dataset` WHERE `hash` IS NOT NULL AND `hash` != ''");
-                $dsRows = $stmtDsHashes->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($dsRows as $row) {
-                    $dist = getHammingDistance($uploadHash, $row['hash']);
-                    if ($dist <= 10) { // Precision Calibrated: Visual similarity match (<= 10)
-                        @imagedestroy($img);
-                        return ['valid' => true, 'reason' => ''];
-                    }
-                }
-            } catch (\Exception $ex) {}
-        }
-    }
-
-    $w = imagesx($img);
-    $h = imagesy($img);
-    
-    $riceColorCount = 0; // FIX BUG A.1: Inisialisasi awal sebelum loop pixel
-    $documentBgCount = 0;
-    $skinColorCount = 0;
-    $artificialClothingCount = 0;
-    $blueNonPadiCount = 0;
-    $grayNonPadiCount = 0;
-    $indoorDarkCount = 0;
-    
-    $sampleX = 60;
-    $sampleY = 60;
-    $stepX = max(1, (int)($w / $sampleX));
-    $stepY = max(1, (int)($h / $sampleY));
-    
-    $totalSamples = 0;
-    for ($x = 0; $x < $w; $x += $stepX) {
-        for ($y = 0; $y < $h; $y += $stepY) {
-            $totalSamples++;
-            $rgb = @imagecolorat($img, (int)$x, (int)$y);
-            if ($rgb === false) continue;
-            $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            // 1. Karakteristik Tanaman Padi Asli (daun hijau sawah, gabah kuning, jerami/batang)
-            $isGreenPadi  = ($g > $r && $g > $b + 8 && $g > 35); // Hijau sawah
-            $isYellowPadi = ($r > 90 && $g > 80 && $b < 140 && ($r - $b) > 25 && ($g - $b) > 15 && abs($r - $g) < 45); // Gabah kuning
-            $isDryPadi    = ($r > 70 && $g > 55 && $b < 105 && $r > $b + 18 && ($r - $g) < 30 && ($g - $b) > 8); // Jerami/batang kering
-            
-            $isRicePixel = ($isGreenPadi || $isYellowPadi || $isDryPadi);
-            if ($isRicePixel) {
-                $riceColorCount++;
-            }
-
-            // 2. FIX BUG A.2: Deteksi Kulit Manusia Presisi Tinggi (Memastikan warna kuning/coklat padi & wereng tidak keliru)
-            $cb = 128 - 0.168736 * $r - 0.331264 * $g + 0.5 * $b;
-            $cr = 128 + 0.418688 * $r - 0.345842 * $g - 0.072846 * $b;
-            $saturation = max($r, $g, $b) - min($r, $g, $b);
-            $isRgbSkin   = ($r > 80) && ($g > 45) && ($b > 30) && ($r > $g) && ($g > $b) && (($r - $g) >= 12) && ($r - $b >= 30);
-            $isYcbcrSkin = ($cb >= 80 && $cb <= 125) && ($cr >= 135 && $cr <= 175) && ($saturation > 20) && ($r > $b + 20) && !$isRicePixel;
-            if ($isRgbSkin || $isYcbcrSkin) {
-                $skinColorCount++;
-            }
-            
-            // 3. Rambut Manusia / Ruangan Gelap / Pintu
-            if ($r < 55 && $g < 55 && $b < 55) {
-                $indoorDarkCount++;
-            }
-
-            // 4. Deteksi Baju / Pakaian Buatan (merah, biru, ungu, oranye terang)
-            $isRedShirt    = ($r > 160 && $g < 70 && $b < 70);
-            $isBlueShirt   = ($b > 130 && $b > $r + 30 && $b > $g + 30);
-            $isPurpleShirt = ($r > 100 && $b > 100 && $g < 80 && abs($r - $b) < 50);
-            $isOrangeShirt = ($r > 190 && $g > 75 && $g < 150 && $b < 50);
-            if ($isRedShirt || $isBlueShirt || $isPurpleShirt || $isOrangeShirt) {
-                $artificialClothingCount++;
-            }
-            
-            // 5. Background dokumen / screenshot / latar tembok polos (hitam/putih solid)
-            if (($r > 220 && $g > 220 && $b > 220) || ($r < 20 && $g < 20 && $b < 20)) {
-                $documentBgCount++;
-            }
-            
-            // 6. Biru langit / biru buatan
-            $isBlueSky = ($b > $r + 20 && $b > $g + 15 && $b > 100);
-            if ($isBlueSky) $blueNonPadiCount++;
-            
-            // 7. Abu-abu netral (tembok, pintu, aspal)
-            $isGray = (abs($r - $g) < 15 && abs($g - $b) < 15 && abs($r - $b) < 15 && $r > 40 && $r < 210);
-            if ($isGray) $grayNonPadiCount++;
-        }
-    }
-    @imagedestroy($img);
-    
-    if ($totalSamples == 0) return ['valid' => true, 'reason' => ''];
-    
-    $skinRatio       = $skinColorCount / $totalSamples;
-    $indoorDarkRatio = $indoorDarkCount / $totalSamples;
-    $clothingRatio   = $artificialClothingCount / $totalSamples;
-    $docRatio        = $documentBgCount / $totalSamples;
-    $blueRatio       = $blueNonPadiCount / $totalSamples;
-    $grayRatio       = $grayNonPadiCount / $totalSamples;
-    $riceRatio       = $riceColorCount / $totalSamples;
-    
-    // A. TOLAK jika terdeteksi kulit manusia murni (wajah / webcam selfie / tubuh)
-    if ($skinRatio >= 0.12 && $riceRatio < 0.05) {
-        return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia, bukan tanaman padi.'];
-    }
-
-    // B. TOLAK jika tidak mengandung tanaman padi (< 1.5% piksel padi) atau foto ruangan/indoor
-    if ($riceRatio < 0.015 || ($indoorDarkRatio + $grayRatio > 0.50 && $riceRatio < 0.025)) {
-        return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai foto ruangan/objek indoor, bukan tanaman padi. Harap unggah foto tanaman padi yang valid.'];
-    }
-    
-    // C. TOLAK jika ada pakaian buatan manusia > 20% piksel
-    if ($clothingRatio > 0.20 && $riceRatio < 0.05) {
-        return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian/baju), bukan tanaman padi.'];
-    }
-    
-    // D. TOLAK jika > 80% background dokumen/UI/screenshot (putih/hitam solid)
-    if ($docRatio > 0.80) {
-        return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos, bukan tanaman padi.'];
-    }
-    
-    // D. TOLAK jika gambar didominasi warna non-padi (biru langit + abu-abu > 85% dan padi < 2%)
-    if (($blueRatio + $grayRatio) > 0.85 && $riceRatio < 0.02) {
-        return ['valid' => false, 'reason' => 'Gambar didominasi langit atau objek buatan, bukan tanaman padi.'];
-    }
-    
-    // E. HARUS memiliki minimal 1.5% piksel bernuansa tanaman padi / sawah (daun/batang/gabah)
-    if ($riceRatio < 0.015) {
-        return ['valid' => false, 'reason' => 'Gambar tidak terdeteksi mengandung tanaman padi (tidak ada daun, batang, gabah, atau sawah).'];
-    }
-    
-    return ['valid' => true, 'reason' => ''];
-}
-
-function isGrassOrWeedImage($imagePath) {
-    if (!file_exists($imagePath)) return false;
-    $info = @getimagesize($imagePath);
-    if (!$info) return false;
-    
-    $mime = $info['mime'];
-    if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
-        $img = @imagecreatefromjpeg($imagePath);
-    } elseif ($mime == 'image/png') {
-        $img = @imagecreatefrompng($imagePath);
-    } elseif ($mime == 'image/webp') {
-        $img = @imagecreatefromwebp($imagePath);
-    } else {
-        return false;
-    }
-    if (!$img) return false;
-    
-    $w = imagesx($img);
-    $h = imagesy($img);
-    
-    $weedGrassPixels = 0;
-    $yellowPadiPixels = 0;
-    $totalSamples = 0;
-    
-    $sampleX = 50;
-    $sampleY = 50;
-    $stepX = max(1, (int)($w / $sampleX));
-    $stepY = max(1, (int)($h / $sampleY));
-    
-    for ($x = 0; $x < $w; $x += $stepX) {
-        for ($y = 0; $y < $h; $y += $stepY) {
-            $totalSamples++;
-            $rgb = @imagecolorat($img, (int)$x, (int)$y);
-            if ($rgb === false) continue;
-            $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            // 1. Rumput Hijau / Gulma / Rumput Liar / Daun Liar / Semak Tanah:
-            if ($g >= ($r - 10) && $g > ($b + 6) && $g > 30 && $r < 190 && $b < 150) {
-                $weedGrassPixels++;
-            }
-            
-            // 2. Karakteristik khas malai/gabah padi (Kuning/Coklat Sawah):
-            if ($r > 90 && $g > 80 && $b < 140 && ($r - $b) > 20 && ($g - $b) > 15) {
-                $yellowPadiPixels++;
-            }
-        }
-    }
-    @imagedestroy($img);
-    
-    if ($totalSamples == 0) return false;
-    
-    $weedRatio = $weedGrassPixels / $totalSamples;
-    $yellowPadiRatio = $yellowPadiPixels / $totalSamples;
-    
-    if ($weedRatio >= 0.72 && $yellowPadiRatio < 0.02) {
-        return true;
-    }
-    
-    return false;
-}
-
 // ============================================================
 // GEMINI VISION API - Validasi Apakah Gambar Adalah Tanaman Padi
-// Model List Diperbarui (B.7 & B.8)
 // ============================================================
 function callGeminiRiceValidator($imagePath, $apiKey) {
     if (empty($apiKey)) return null;
     if (!file_exists($imagePath)) return null;
     
-    $imageData = base64_encode(file_get_contents($imagePath));
+    $imageData = getOptimizedBase64($imagePath, 1024);
     $info = @getimagesize($imagePath);
     $mimeType = $info ? $info['mime'] : 'image/jpeg';
     
@@ -514,7 +189,6 @@ Jawab HANYA dalam format JSON valid ini (tanpa teks lain):
         "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 256]
     ];
     
-    // Model Gemini terbaru & valid
     $models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
     $response = null;
     $httpCode = 0;
@@ -529,10 +203,8 @@ Jawab HANYA dalam format JSON valid ini (tanpa teks lain):
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         
-        $t0 = microtime(true);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $latencyMs = round((microtime(true) - $t0) * 1000);
         curl_close($ch);
         
         if ($httpCode === 200 && !empty($response)) {
@@ -557,13 +229,12 @@ Jawab HANYA dalam format JSON valid ini (tanpa teks lain):
 
 // ============================================================
 // GEMINI VISION API - Cross-Check Deteksi Hama
-// Model List Diperbarui (B.7 & B.8)
 // ============================================================
 function callGeminiVisionAPI($imagePath, $apiKey) {
     if (empty($apiKey)) return null;
     if (!file_exists($imagePath)) return null;
     
-    $imageData = base64_encode(file_get_contents($imagePath));
+    $imageData = getOptimizedBase64($imagePath, 1024);
     $info = @getimagesize($imagePath);
     $mimeType = $info ? $info['mime'] : 'image/jpeg';
     
@@ -667,7 +338,6 @@ function normalizeUrls($data) {
     return $data;
 }
 
-// Buat direktori upload jika belum ada
 $uploadDir = __DIR__ . '/uploads';
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
@@ -712,7 +382,7 @@ if (empty($inputData) && !empty($_POST)) {
 
 // 5. ROUTING TABLE
 
-// Route: /health (Requirement 4)
+// Route: /health (Requirement 4 & Public Health Check)
 if ($path === '/health' && $method === 'GET') {
     $dbOk = false;
     $dsCount = 0;
@@ -724,17 +394,17 @@ if ($path === '/health' && $method === 'GET') {
     } catch (\Exception $e) {}
     
     sendResponse(true, [
-        'status'      => 'ok',
-        'service'     => 'PadiGuard Backend API',
-        'environment' => getEnvVar('RAILWAY_ENVIRONMENT') ? 'railway' : 'local',
-        'database'    => $dbOk ? 'connected' : 'disconnected',
+        'status'        => 'ok',
+        'service'       => 'PadiGuard Backend API',
+        'environment'   => getEnvVar('RAILWAY_ENVIRONMENT') ? 'railway' : 'local',
+        'database'      => $dbOk ? 'connected' : 'disconnected',
         'dataset_count' => $dsCount,
-        'timestamp'   => date('Y-m-d H:i:s'),
-        'memory_mb'   => round(memory_get_usage(true) / 1024 / 1024, 2)
+        'timestamp'     => date('Y-m-d H:i:s'),
+        'memory_mb'     => round(memory_get_usage(true) / 1024 / 1024, 2)
     ]);
 }
 
-// Route: /version (Requirement 4)
+// Route: /version (Requirement 4 & Public Version Check)
 if ($path === '/version' && $method === 'GET') {
     sendResponse(true, [
         'version'     => '2.4.0-railway-parity',
@@ -847,12 +517,10 @@ function serveImageFile($filePath) {
     } elseif ($ext === 'svg') {
         $contentType = 'image/svg+xml';
     }
+    if (ob_get_length()) ob_clean();
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: $contentType");
     header("Content-Length: " . filesize($filePath));
-    while (ob_get_level()) {
-        ob_end_clean();
-    }
     readfile($filePath);
     exit;
 }
@@ -1069,19 +737,18 @@ if ($path === '/detection' && $method === 'POST') {
 
     // =========================================================================
     // STEP 3: ROBOFLOW YOLOv12 DETECTIONS (Pest & Maturity)
-    // Retry loop & timeout dari env variable (C.10 - C.13)
     // =========================================================================
     $predictions = [];
     $roboflowSuccess = false;
     $modelUsed = 'none';
-    $base64Image = base64_encode(file_get_contents($targetPath));
+    $base64Image = getOptimizedBase64($targetPath, 1024);
 
     $pestModelId      = "jenis-hama-hlar6";
     $pestModelVersion = "1";
     $maturModelId     = "kematangan-ieouc";
     $maturModelVersion = "1";
 
-    // 3A. Direct Roboflow Pest Model (dengan retry otomatis C.11)
+    // 3A. Direct Roboflow Pest Model
     $pestUrl = "https://detect.roboflow.com/{$pestModelId}/{$pestModelVersion}?api_key={$ROBOFLOW_API_KEY}&name=image.png";
     for ($attempt = 1; $attempt <= 2; $attempt++) {
         $ch = curl_init($pestUrl);
@@ -1186,7 +853,7 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // STEP 4: VISUAL HASH MATCHING DATABASE (Calibrated Threshold A.4)
+    // STEP 4: VISUAL HASH MATCHING DATABASE
     // =========================================================================
     if ($hamaName === null) {
         $uploadedHash = getAverageHash($targetPath);
@@ -1218,7 +885,6 @@ if ($path === '/detection' && $method === 'POST') {
             }
         }
 
-        // FIX A.4: Precision threshold hash matching (dikalibrasi ke $HASH_THRESHOLD = 15)
         if ($matchedDataset && $realDistance <= $HASH_THRESHOLD) {
             $label = $matchedDataset['label'];
             
@@ -1232,7 +898,6 @@ if ($path === '/detection' && $method === 'POST') {
             $dsPest = extractPestNameFromText($label);
             if ($dsPest !== null) {
                 $hamaName = $dsPest;
-                // FIX A.6: Confidence deterministik presisi tanpa rand()
                 $hamaConf = min(0.96, round(0.85 + ((15 - $realDistance) / 100), 2));
                 $boxes[] = [
                     'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
@@ -1257,7 +922,7 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // STEP 5: GEMINI VISION AI CROSS-CHECK (Jika Roboflow & Hash belum menemukan)
+    // STEP 5: GEMINI VISION AI CROSS-CHECK
     // =========================================================================
     if ($hamaName === null && $geminiHama !== null) {
         $hamaName = $geminiHama;
@@ -1287,17 +952,15 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // STEP 6: ANALISIS PIKSEL KEMATANGAN (Deterministik FIX A.5 & A.6)
+    // STEP 6: ANALISIS PIKSEL KEMATANGAN (Deterministik)
     // =========================================================================
     if ($kematangan === null || $kematanganConf <= 0.0) {
         if ($kematangan === null) {
             $kematangan = analyzeMaturity($targetPath);
         }
-        // FIX A.5 & A.6: Hilangkan rand() - Ganti nilai acak dengan nilai deterministik
         $kematanganConf = 0.88;
     }
     
-    // Add maturity bounding box jika belum ada
     $hasMaturityBox = false;
     foreach ($boxes as $b) {
         if (!($b['isHama'] ?? false)) {
@@ -1313,7 +976,6 @@ if ($path === '/detection' && $method === 'POST') {
         ];
     }
 
-    // Set Informasi Rekomendasi & Tingkat Bahaya
     if ($hamaName) {
         $hamaInfo = isset($hamaDetails[$hamaName]) ? $hamaDetails[$hamaName] : $hamaDetails[null];
         $dangerLevel = $hamaInfo['danger'];
@@ -1354,7 +1016,6 @@ if ($path === '/detection' && $method === 'POST') {
     $newDetection = $stmt->fetch();
     $newDetection['boundingBoxes'] = json_decode($newDetection['boundingBoxes'], true);
 
-    // Logging per layer untuk debugging (APP_DEBUG=true)
     if ($APP_DEBUG) {
         @file_put_contents(__DIR__ . '/uploads/debug_last_inference.json', json_encode($auditLog, JSON_PRETTY_PRINT));
     }
@@ -1406,11 +1067,8 @@ if ($detectionId && $method === 'DELETE') {
     sendResponse(true, ['message' => 'Data deteksi berhasil dihapus.']);
 }
 
-// 7. ADMIN ENDPOINTS GUARD (Semua di bawah ini butuh role: admin)
+// 7. ADMIN ENDPOINTS GUARD
 $currentUser = verifyTokenHeader();
-if (!$currentUser || $currentUser['role'] !== 'admin') {
-    // Biarkan untuk akses admin jika token admin dikirim
-}
 
 // Route: /admin/dashboard
 if ($path === '/admin/dashboard' && $method === 'GET') {
@@ -1441,5 +1099,3 @@ if ($path === '/admin/model/performance' && $method === 'GET') {
 
 // Fallback 404
 sendResponse(false, ['message' => 'Endpoint API tidak ditemukan.'], 404);
-
-
