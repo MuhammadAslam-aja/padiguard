@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // run_cli_benchmark.php - Direct CLI Evaluator for Metrics & Accuracy Calculation
 error_reporting(E_ALL & ~E_DEPRECATED);
 ini_set('display_errors', 0);
@@ -68,8 +68,8 @@ if (file_exists($samplesDir) && count($testSamples) < 60) {
 echo "Total Gambar Uji Terkumpul: " . count($testSamples) . " gambar\n";
 echo "Memulai pengujian inferensi direct engine (dengan optimasi payload image < 1024px)...\n\n";
 
-$GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY') ?: ''';
-$ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY') ?: 'nsRtr9srM0kLon24RWka';
+$GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY');
+$ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY', 'nsRtr9srM0kLon24RWka');
 $ROBOFLOW_TIMEOUT = 25;
 $HASH_THRESHOLD   = 15;
 
@@ -97,7 +97,7 @@ foreach ($testSamples as $idx => $sample) {
     // Step 1: Pixel Validation Check
     $pixelValid = isRicePlantImage($targetPath)['valid'];
     
-    // Step 2: Roboflow YOLOv12 (Dengan getOptimizedBase64 agar respons < 3 detik!)
+    // Step 2: Roboflow YOLOv12
     $base64Image = getOptimizedBase64($targetPath, 1024);
     $predictions = [];
     $rfSuccess = false;
@@ -222,7 +222,7 @@ foreach ($testSamples as $idx => $sample) {
         }
     }
     
-    $statusText = $isCorrect ? "âœ“ MATCH" : "âœ— MISMATCH";
+    $statusText = $isCorrect ? "✓ MATCH" : "✗ MISMATCH";
     $actualStr  = $hamaName ? "Hama: $hamaName" : "Kem: $kematangan (Aman)";
     
     printf("[%02d/%02d] %-30s | Exp: %-16s | Act: %-22s | %-8s | %4d ms\n", 
@@ -281,5 +281,4 @@ $summaryData = [
 ];
 
 file_put_contents($outputJson, json_encode($summaryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-echo "âœ“ Saved benchmark output to: $outputJson\n";
-
+echo "✓ Saved benchmark output to: $outputJson\n";
