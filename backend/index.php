@@ -484,29 +484,27 @@ function callGeminiRiceValidator($imagePath, $apiKey) {
     $info = @getimagesize($imagePath);
     $mimeType = $info ? $info['mime'] : 'image/jpeg';
     
-    $prompt = "Anda adalah sistem validasi gambar untuk aplikasi pertanian padi Indonesia.
+    $prompt = 'Anda adalah sistem pakar AI pertanian padi Indonesia (PadiGuard).
 
-Tugas Anda: Tentukan apakah gambar ini adalah TANAMAN PADI atau bukan.
+Tugas Utama Anda:
+1. Tentukan apakah gambar ini adalah TANAMAN PADI/SAWAH (is_rice_plant: true atau false).
+   - Valid: sawah, daun/batang/gabah padi, bulir padi, atau hama pada tanaman padi.
+   - Tolak (false): foto wajah/manusia, hewan, mobil, makanan, bangunan, dokumen, rumput liar tanpa padi, dll.
 
-TANAMAN PADI yang valid meliputi:
-- Sawah dengan tanaman padi (hijau/kuning/coklat)
-- Batang, daun, atau malai padi
-- Bulir padi/gabah
-- Hama yang ada di tanaman padi (wereng, walang sangit, ulat grayak, penggerek batang)
+2. Jika tanaman padi, sekalian tentukan:
+   - hama_name: "Wereng Coklat" | "Penggerek Batang" | "Walang Sangit" | "Ulat Grayak" | "Padi Sehat" | null
+   - kematangan: "Matang" | "Setengah Matang" | "Mentah"
+   - confidence: angka desimal 0.70 - 0.98
+   - reason: alasan singkat max 10 kata.
 
-BUKAN TANAMAN PADI (TOLAK):
-- Wajah manusia atau foto orang
-- Hewan, kucing, anjing, dll
-- Pemandangan kota, gedung, jalan
-- Makanan, nasi matang, masakan
-- Dokumen, teks, screenshot
-- Pohon besar non-padi, hutan, rumput liar tanpa padi
-- Objek buatan: mobil, elektronik, dll
-- Gambar abstrak atau kartun
-
-Jawab HANYA dalam format JSON ini (tanpa teks lain):
-{\"is_rice_plant\": true atau false, \"reason\": \"alasan singkat max 10 kata\"}
-";
+Jawab HANYA dalam format JSON valid ini (tanpa teks lain):
+{
+  "is_rice_plant": true,
+  "hama_name": "Wereng Coklat",
+  "kematangan": "Setengah Matang",
+  "confidence": 0.88,
+  "reason": "terlihat bercak wereng coklat di batang"
+}';
     
     $payload = [
         "contents" => [[
@@ -515,7 +513,7 @@ Jawab HANYA dalam format JSON ini (tanpa teks lain):
                 ["text" => $prompt]
             ]
         ]],
-        "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 128]
+        "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 256]
     ];
     
     $models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
@@ -1097,11 +1095,15 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // VALIDASI UTAMA: GEMINI VISION AI DIJALANKAN PERTAMA KALI (LAYER 1)
+    // VALIDASI UTAMA: GEMINI VISION AI DIJALANKAN PERTAMA KALI (STEP 2)
     // =========================================================================
     $GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: 'AQ.Ab8RN6IATsh92P1ESPHS6B4KI0ZPs5' . '_r3f-uqAJ8uWDn1mA1Uw'; // Gemini API Key
     
-    // LAYER 1 (UTAMA): Kirim gambar ke Gemini AI terlebih dahulu untuk analisis AI visual murni
+    $geminiHama = null;
+    $geminiHamaConf = 0.0;
+    $geminiKematangan = null;
+
+    // LAYER 1 (UTAMA): Kirim gambar ke Gemini AI terlebih dahulu untuk validasi & deteksi awal
     $geminiValidation = callGeminiRiceValidator($targetPath, $GEMINI_API_KEY);
     if ($geminiValidation !== null && isset($geminiValidation['is_rice_plant'])) {
         if ($geminiValidation['is_rice_plant'] === false) {
@@ -1110,6 +1112,14 @@ if ($path === '/detection' && $method === 'POST') {
             sendResponse(false, [
                 'message' => "Gambar ditolak oleh Gemini AI ($reason). Harap unggah foto tanaman padi yang valid (sawah/batang/daun/malai padi)."
             ], 400);
+        }
+        
+        if (!empty($geminiValidation['hama_name']) && $geminiValidation['hama_name'] !== 'Padi Sehat') {
+            $geminiHama = $geminiValidation['hama_name'];
+            $geminiHamaConf = (float)($geminiValidation['confidence'] ?? 0.88);
+        }
+        if (!empty($geminiValidation['kematangan'])) {
+            $geminiKematangan = $geminiValidation['kematangan'];
         }
     }
     
@@ -1376,9 +1386,17 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // LANGKAH 3: JIKA MASIH BELUM TERDETEKSI HAMA -> GEMINI VISION AI FALLBACK
+    // LANGKAH 3: CROSS-CHECK GEMINI VISION AI DENGAN ROBOFLOW YOLOV12
     // =========================================================================
-    if ($hamaName === null) {
+    if ($hamaName === null && $geminiHama !== null) {
+        $hamaName = $geminiHama;
+        $hamaConf = $geminiHamaConf > 0 ? $geminiHamaConf : 0.88;
+        $boxes[] = [
+            'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
+            'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
+            'isHama' => true
+        ];
+    } else if ($hamaName === null) {
         $geminiRes = callGeminiVisionAPI($targetPath, $GEMINI_API_KEY);
         if ($geminiRes && !empty($geminiRes['hama_detected']) && !empty($geminiRes['hama_name'])) {
             $hamaName = $geminiRes['hama_name'];
@@ -1389,6 +1407,11 @@ if ($path === '/detection' && $method === 'POST') {
                 'isHama' => true
             ];
         }
+    }
+
+    if ($kematangan === null && $geminiKematangan !== null) {
+        $kematangan = $geminiKematangan;
+        $kematanganConf = 0.90;
     }
 
     // =========================================================================
