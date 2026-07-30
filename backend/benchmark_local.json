@@ -1,0 +1,533 @@
+{
+    "timestamp": "2026-07-30 15:11:22",
+    "metrics": {
+        "total_tested": 60,
+        "correct": 49,
+        "accuracy": 81.67,
+        "precision": 88.24,
+        "recall": 90,
+        "f1_score": 89.11,
+        "avg_latency_ms": 3817,
+        "determinism_passed": true
+    },
+    "confusion_matrix": {
+        "TP": 45,
+        "TN": 4,
+        "FP": 6,
+        "FN": 5
+    },
+    "class_stats": {
+        "Wereng Coklat": {
+            "tp": 8,
+            "fp": 0,
+            "fn": 0
+        },
+        "Penggerek Batang": {
+            "tp": 10,
+            "fp": 6,
+            "fn": 0
+        },
+        "Padi Sehat": {
+            "tp": 4,
+            "fp": 0,
+            "fn": 6
+        },
+        "Matang": {
+            "tp": 12,
+            "fp": 2,
+            "fn": 0
+        },
+        "Mentah": {
+            "tp": 9,
+            "fp": 2,
+            "fn": 1
+        },
+        "Setengah Matang": {
+            "tp": 6,
+            "fp": 1,
+            "fn": 4
+        }
+    },
+    "details": [
+        {
+            "sample": "IMG-20190510-WA0005.jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2841
+        },
+        {
+            "sample": "hama.jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3448
+        },
+        {
+            "sample": "images (1).jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3459
+        },
+        {
+            "sample": "images (2).jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 4574
+        },
+        {
+            "sample": "images.jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2631
+        },
+        {
+            "sample": "unnamed.jpg",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 6186
+        },
+        {
+            "sample": "Screenshot 2026-07-13 013641.png",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 4344
+        },
+        {
+            "sample": "Screenshot 2026-07-13 014114.png",
+            "expected": "Wereng Coklat",
+            "hama": "Wereng Coklat",
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3856
+        },
+        {
+            "sample": "DJI_0201.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3674
+        },
+        {
+            "sample": "DJI_0202.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 5716
+        },
+        {
+            "sample": "DJI_0203.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4503
+        },
+        {
+            "sample": "DJI_0204.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 2950
+        },
+        {
+            "sample": "DJI_0205.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4818
+        },
+        {
+            "sample": "DJI_0206.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3991
+        },
+        {
+            "sample": "DJI_0207.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3245
+        },
+        {
+            "sample": "DJI_0208.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3100
+        },
+        {
+            "sample": "DJI_0209.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3288
+        },
+        {
+            "sample": "DJI_0210.JPG",
+            "expected": "Penggerek Batang",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3186
+        },
+        {
+            "sample": "DJI_0131.JPG",
+            "expected": "Padi Sehat",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3679
+        },
+        {
+            "sample": "DJI_0132.JPG",
+            "expected": "Padi Sehat",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3281
+        },
+        {
+            "sample": "DJI_0207.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": false,
+            "latency_ms": 3931
+        },
+        {
+            "sample": "DJI_0212.JPG",
+            "expected": "Padi Sehat",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 2455
+        },
+        {
+            "sample": "DJI_0217.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Setengah Matang",
+            "is_correct": false,
+            "latency_ms": 3143
+        },
+        {
+            "sample": "DJI_0220.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Setengah Matang",
+            "is_correct": false,
+            "latency_ms": 3962
+        },
+        {
+            "sample": "DJI_0222.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": false,
+            "latency_ms": 4233
+        },
+        {
+            "sample": "DJI_0225.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Mentah",
+            "is_correct": false,
+            "latency_ms": 3311
+        },
+        {
+            "sample": "DJI_0230.JPG",
+            "expected": "Padi Sehat",
+            "hama": "Penggerek Batang",
+            "kematangan": "Setengah Matang",
+            "is_correct": false,
+            "latency_ms": 4515
+        },
+        {
+            "sample": "DJI_0233.JPG",
+            "expected": "Padi Sehat",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3041
+        },
+        {
+            "sample": "DJI_0131.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2968
+        },
+        {
+            "sample": "DJI_0132.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3652
+        },
+        {
+            "sample": "DJI_0134.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3042
+        },
+        {
+            "sample": "DJI_0135.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 4989
+        },
+        {
+            "sample": "DJI_0162.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2319
+        },
+        {
+            "sample": "DJI_0163.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3152
+        },
+        {
+            "sample": "DJI_0169.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3079
+        },
+        {
+            "sample": "DJI_0170.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3595
+        },
+        {
+            "sample": "DJI_0171.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2737
+        },
+        {
+            "sample": "DJI_0172.JPG",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 3899
+        },
+        {
+            "sample": "DJI_0154.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4561
+        },
+        {
+            "sample": "DJI_0155.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4252
+        },
+        {
+            "sample": "DJI_0156.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4355
+        },
+        {
+            "sample": "DJI_0157.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3526
+        },
+        {
+            "sample": "DJI_0158.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 5688
+        },
+        {
+            "sample": "DJI_0159.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 4072
+        },
+        {
+            "sample": "DJI_0160.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 3601
+        },
+        {
+            "sample": "DJI_0184.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": false,
+            "latency_ms": 3028
+        },
+        {
+            "sample": "DJI_0185.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 5001
+        },
+        {
+            "sample": "DJI_0270.JPG",
+            "expected": "Mentah",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": true,
+            "latency_ms": 2942
+        },
+        {
+            "sample": "DJI_0166.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 2976
+        },
+        {
+            "sample": "DJI_0167.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 3922
+        },
+        {
+            "sample": "DJI_0231.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": false,
+            "latency_ms": 6112
+        },
+        {
+            "sample": "DJI_0232.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 5449
+        },
+        {
+            "sample": "DJI_0233.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": false,
+            "latency_ms": 4208
+        },
+        {
+            "sample": "DJI_0234.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": false,
+            "latency_ms": 4271
+        },
+        {
+            "sample": "DJI_0235.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 4974
+        },
+        {
+            "sample": "DJI_0236.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 3636
+        },
+        {
+            "sample": "DJI_0237.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Setengah Matang",
+            "is_correct": true,
+            "latency_ms": 3655
+        },
+        {
+            "sample": "DJI_0238.JPG",
+            "expected": "Setengah Matang",
+            "hama": null,
+            "kematangan": "Mentah",
+            "is_correct": false,
+            "latency_ms": 5478
+        },
+        {
+            "sample": "sample_matang_-_sehat_1.jpg",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 2671
+        },
+        {
+            "sample": "sample_matang_-_sehat_10.jpg",
+            "expected": "Matang",
+            "hama": null,
+            "kematangan": "Matang",
+            "is_correct": true,
+            "latency_ms": 1863
+        }
+    ]
+}

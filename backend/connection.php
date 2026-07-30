@@ -274,47 +274,26 @@ try {
     foreach ($defaultDetections as $d) {
         $stmtDet->execute($d);
     }
-
-    // Seed default datasets
-    $defaultDataset = [
-        ['id' => 'ds_1', 'label' => 'Matang - Sehat', 'imageUrl' => 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_2', 'label' => 'Setengah Matang - Wereng Coklat (Spot Hopperburn)', 'imageUrl' => 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_3', 'label' => 'Mentah - Walang Sangit', 'imageUrl' => 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_4', 'label' => 'Mentah - Sehat', 'imageUrl' => 'https://images.unsplash.com/photo-1563514227147-6d2ff665a6a0?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_5', 'label' => 'Setengah Matang - Pematang Sawah (Normal)', 'imageUrl' => 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_6', 'label' => 'Matang - Ulat Grayak', 'imageUrl' => 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_7', 'label' => 'Setengah Matang - Penggerek Batang', 'imageUrl' => 'https://images.unsplash.com/photo-1500627869374-13cd993b1115?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_8', 'label' => 'Matang - Spot Rusak Wereng', 'imageUrl' => 'https://images.unsplash.com/photo-1475113548554-5a36f1f523d6?auto=format&fit=crop&q=80&w=200'],
-        ['id' => 'ds_9', 'label' => 'Matang - Wereng Coklat (Spot Hopperburn)', 'imageUrl' => 'uploads/det_6a53cba3f095a_1783876515.png'],
-        ['id' => 'ds_10', 'label' => 'Setengah Matang - Wereng Coklat (Kerusakan Batang)', 'imageUrl' => 'uploads/det_6a53cb0f7da86_1783876367.png'],
-        ['id' => 'ds_11', 'label' => 'Matang - Wereng Coklat (Hopperburn Berat)', 'imageUrl' => 'uploads/det_6a53ca86dae85_1783876230.png'],
-        ['id' => 'ds_12', 'label' => 'Matang - Wereng Coklat (Kerusakan Jalur)', 'imageUrl' => 'uploads/det_6a53d00f24188_1783877647.png'],
-        ['id' => 'ds_13', 'label' => 'Matang - Wereng Coklat (Batang Menguning)', 'imageUrl' => 'uploads/det_6a53d079bf274_1783877753.jpeg'],
-        ['id' => 'ds_14', 'label' => 'Matang - Wereng Coklat (Spot Kering Awal)', 'imageUrl' => 'uploads/det_6a53d0c70e83f_1783877831.png'],
-        ['id' => 'ds_15', 'label' => 'Matang - Sehat', 'imageUrl' => 'uploads/det_6a53d2b808fd2_1783878328.jpeg'],
-        ['id' => 'ds_16', 'label' => 'Setengah Matang - Pematang Sawah (Normal)', 'imageUrl' => 'uploads/det_6a550c0e721bc_1783958542.jpeg'],
-    ];
-    $stmtDs = $pdo->prepare("INSERT INTO `dataset` (`id`, `label`, `imageUrl`, `hash`) VALUES (:id, :label, :imageUrl, :hash)");
-    foreach ($defaultDataset as $ds) {
-        $hash = null;
-        $localPath = getLocalFilePath($ds['imageUrl']);
-        if ($localPath && file_exists($localPath)) {
-            $hash = getAverageHash($localPath);
-        }
-        $ds['hash'] = $hash;
-        $stmtDs->execute($ds);
-    }
-    
-    // Seed model performance
-    $pdo->query("INSERT INTO `model_performance` (`accuracy`, `precision`, `recall`, `f1`) VALUES (0.962, 0.948, 0.938, 0.943)");
 }
 
 // Pastikan nilai performa model diperbarui sesuai hasil training Roboflow terbaru (real-time migration)
 try {
     $pdo->exec("UPDATE `model_performance` SET `accuracy` = 0.962, `precision` = 0.948, `recall` = 0.938, `f1` = 0.943");
-} catch (\PDOException $ex) {
-    // Abaikan jika tabel belum ada
-}
+} catch (\PDOException $ex) {}
+
+// Auto-seed dataset_seed.sql (seluruh 1376 hash dataset) jika dataset di DB < 100
+try {
+    $dsCount = (int)$pdo->query("SELECT COUNT(*) FROM `dataset`")->fetchColumn();
+    if ($dsCount < 100) {
+        $seedFile = __DIR__ . '/dataset_seed.sql';
+        if (file_exists($seedFile)) {
+            $sqlSeed = file_get_contents($seedFile);
+            if (!empty($sqlSeed)) {
+                $pdo->exec($sqlSeed);
+            }
+        }
+    }
+} catch (\Exception $e) {}
 
 // Sinkronkan secara otomatis file sampel dataset dari folder dataset_samples ke dalam database MySQL
 try {
@@ -368,5 +347,3 @@ try {
         }
     }
 } catch (\Exception $e) {}
-
-
