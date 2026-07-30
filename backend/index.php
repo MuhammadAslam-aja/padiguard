@@ -1,11 +1,13 @@
 <?php
 // index.php - Router utama API PHP PadiGuard (MySQL Laragon)
 
-// 1. CORS Headers & Error Reporting
+// 1. CORS Headers, Timezone & Error Reporting
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, ngrok-skip-browser-warning");
 header("ngrok-skip-browser-warning: true");
+
+date_default_timezone_set('Asia/Jakarta');
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Matikan agar tidak mengotori output JSON
@@ -305,7 +307,7 @@ function isRicePlantImage($imagePath) {
     $artificialClothingCount = 0;
     $blueNonPadiCount = 0;
     $grayNonPadiCount = 0;
-    $riceColorCount = 0;
+    $indoorDarkCount = 0;
     
     $sampleX = 60;
     $sampleY = 60;
@@ -322,30 +324,31 @@ function isRicePlantImage($imagePath) {
             $g = ($rgb >> 8) & 0xFF;
             $b = $rgb & 0xFF;
             
-            // 1. Karakteristik Tanaman Padi Asli (daun hijau segar, gabah kuning, batang kering, sawah, kecoklatan)
-            $isGreenPadi  = ($g >= $r * 0.85 && $g >= $b && $g > 20); // Hijau segar / kekuningan
-            $isYellowPadi = ($r > 55 && $g > 45 && $b < 150 && ($r + $g) > 1.6 * $b); // Padi matang / gabah kuning
-            $isDryPadi    = ($r > 35 && $g > 30 && $b < 120 && $r >= $g * 0.65 && ($r - $b) > 4); // Batang kering / jerami / bercak daun
-            $isDarkPlant  = ($g >= $b && ($r + $g + $b) > 15 && ($r + $g + $b) < 230 && $g >= $r * 0.6); // Daun rimbun / bayangan
+            // 1. Karakteristik Tanaman Padi Asli (daun hijau sawah, gabah kuning, jerami/batang)
+            $isGreenPadi  = ($g > $r && $g > $b + 8 && $g > 35); // Hijau sawah
+            $isYellowPadi = ($r > 90 && $g > 80 && $b < 140 && ($r - $b) > 25 && ($g - $b) > 15 && abs($r - $g) < 45); // Gabah kuning
+            $isDryPadi    = ($r > 70 && $g > 55 && $b < 105 && $r > $b + 18 && ($r - $g) < 30 && ($g - $b) > 8); // Jerami/batang kering
             
-            $isRicePixel = ($isGreenPadi || $isYellowPadi || $isDryPadi || $isDarkPlant);
+            $isRicePixel = ($isGreenPadi || $isYellowPadi || $isDryPadi);
             if ($isRicePixel) {
                 $riceColorCount++;
             }
 
-            // 2. Deteksi Kulit Manusia Presisi Tinggi (HANYA jika piksel bukan bagian dari tanaman padi/sawah)
-            if (!$isRicePixel) {
-                $cb = 128 - 0.168736 * $r - 0.331264 * $g + 0.5 * $b;
-                $cr = 128 + 0.418688 * $r - 0.345842 * $g - 0.072846 * $b;
-                
-                $isRgbSkin   = ($r > 80) && ($g > 50) && ($b > 30) && ($r > $g) && ($g > $b) && (($r - $g) >= 15);
-                $isYcbcrSkin = ($cb >= 85 && $cb <= 120) && ($cr >= 140 && $cr <= 168);
-                if ($isRgbSkin && $isYcbcrSkin) {
-                    $skinColorCount++;
-                }
+            // 2. Deteksi Kulit Manusia Presisi Tinggi (Wajah, leher, tubuh, selfie webcam)
+            $cb = 128 - 0.168736 * $r - 0.331264 * $g + 0.5 * $b;
+            $cr = 128 + 0.418688 * $r - 0.345842 * $g - 0.072846 * $b;
+            $isRgbSkin   = ($r > 60) && ($g > 35) && ($b > 20) && ($r > $g) && ($g > $b) && (($r - $g) >= 8);
+            $isYcbcrSkin = ($cb >= 77 && $cb <= 130) && ($cr >= 130 && $cr <= 180);
+            if ($isRgbSkin || $isYcbcrSkin) {
+                $skinColorCount++;
             }
             
-            // 3. Deteksi Baju / Pakaian Buatan (merah, biru, ungu, oranye terang)
+            // 3. Rambut Manusia / Ruangan Gelap / Pintu
+            if ($r < 55 && $g < 55 && $b < 55) {
+                $indoorDarkCount++;
+            }
+
+            // 4. Deteksi Baju / Pakaian Buatan (merah, biru, ungu, oranye terang)
             $isRedShirt    = ($r > 160 && $g < 70 && $b < 70);
             $isBlueShirt   = ($b > 130 && $b > $r + 30 && $b > $g + 30);
             $isPurpleShirt = ($r > 100 && $b > 100 && $g < 80 && abs($r - $b) < 50);
@@ -354,16 +357,16 @@ function isRicePlantImage($imagePath) {
                 $artificialClothingCount++;
             }
             
-            // 4. Background dokumen / screenshot / latar polos (hitam/putih solid)
-            if (($r > 225 && $g > 225 && $b > 225) || ($r < 20 && $g < 20 && $b < 20)) {
+            // 5. Background dokumen / screenshot / latar tembok polos (hitam/putih solid)
+            if (($r > 220 && $g > 220 && $b > 220) || ($r < 20 && $g < 20 && $b < 20)) {
                 $documentBgCount++;
             }
             
-            // 5. Biru langit / biru buatan
+            // 6. Biru langit / biru buatan
             $isBlueSky = ($b > $r + 20 && $b > $g + 15 && $b > 100);
             if ($isBlueSky) $blueNonPadiCount++;
             
-            // 6. Abu-abu netral (beton, tembok, aspal)
+            // 7. Abu-abu netral (tembok, pintu, aspal)
             $isGray = (abs($r - $g) < 15 && abs($g - $b) < 15 && abs($r - $b) < 15 && $r > 40 && $r < 210);
             if ($isGray) $grayNonPadiCount++;
         }
@@ -372,25 +375,30 @@ function isRicePlantImage($imagePath) {
     
     if ($totalSamples == 0) return ['valid' => true, 'reason' => ''];
     
-    $skinRatio     = $skinColorCount / $totalSamples;
-    $clothingRatio = $artificialClothingCount / $totalSamples;
-    $docRatio      = $documentBgCount / $totalSamples;
-    $blueRatio     = $blueNonPadiCount / $totalSamples;
-    $grayRatio     = $grayNonPadiCount / $totalSamples;
-    $riceRatio     = $riceColorCount / $totalSamples;
+    $skinRatio       = $skinColorCount / $totalSamples;
+    $indoorDarkRatio = $indoorDarkCount / $totalSamples;
+    $clothingRatio   = $artificialClothingCount / $totalSamples;
+    $docRatio        = $documentBgCount / $totalSamples;
+    $blueRatio       = $blueNonPadiCount / $totalSamples;
+    $grayRatio       = $grayNonPadiCount / $totalSamples;
+    $riceRatio       = $riceColorCount / $totalSamples;
     
-    // A. TOLAK jika terdeteksi kulit manusia (wajah / tubuh / tangan / selfie webcam)
-    $skinThreshold = ($riceRatio >= 0.03) ? 0.40 : 0.05;
-    if ($skinRatio >= $skinThreshold) {
+    // A. TOLAK jika terdeteksi kulit manusia (wajah / webcam selfie / tubuh)
+    if ($skinRatio >= 0.035) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia, bukan tanaman padi.'];
     }
+
+    // B. TOLAK jika tidak mengandung tanaman padi (< 1.5% piksel padi) atau foto ruangan/indoor
+    if ($riceRatio < 0.015 || ($indoorDarkRatio + $grayRatio > 0.40 && $riceRatio < 0.03)) {
+        return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai foto ruangan/objek indoor, bukan tanaman padi. Harap unggah foto tanaman padi yang valid.'];
+    }
     
-    // B. TOLAK jika ada pakaian buatan manusia > 15% piksel
+    // C. TOLAK jika ada pakaian buatan manusia > 15% piksel
     if ($clothingRatio > 0.15 && $riceRatio < 0.05) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian/baju), bukan tanaman padi.'];
     }
     
-    // C. TOLAK jika > 75% background dokumen/UI/screenshot (putih/hitam solid)
+    // D. TOLAK jika > 75% background dokumen/UI/screenshot (putih/hitam solid)
     if ($docRatio > 0.75) {
         return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos, bukan tanaman padi.'];
     }

@@ -47,6 +47,8 @@ if ($isRailway) {
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 }
 
+date_default_timezone_set('Asia/Jakarta');
+
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -55,6 +57,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo->exec("SET time_zone = '+07:00'");
 } catch (\PDOException $e) {
     if (!$isRailway) {
         // Lokal: Jika database padiguard_db belum ada, buat secara otomatis
