@@ -1,18 +1,20 @@
 <?php
-ob_start(); // Buffer output untuk menjamin respon JSON bersih 100% tanpa warning headers
+ini_set('output_buffering', '4096');
+ob_start();
 // index.php - Router utama API PHP PadiGuard (MySQL Laragon & Railway Production)
 // Version: 2.4.0-railway-parity (Deterministic, Environment-driven, Precision-calibrated)
 
-// 1. CORS Headers, Timezone & Error Reporting
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, ngrok-skip-browser-warning");
-header("ngrok-skip-browser-warning: true");
-
+error_reporting(0);
+ini_set('display_errors', 0);
 date_default_timezone_set('Asia/Jakarta');
 
-error_reporting(0); // Nonaktifkan warning agar output JSON 100% murni untuk API & Flutter
-ini_set('display_errors', 0);
+// 1. CORS Headers
+if (!headers_sent()) {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, ngrok-skip-browser-warning");
+    header("ngrok-skip-browser-warning: true");
+}
 
 // Tangani Preflight Request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -47,14 +49,16 @@ if (stripos($uriPath, '/api') === false) {
             'woff2'=> 'font/woff2',
         ];
         $contentType = isset($contentTypes[$ext]) ? $contentTypes[$ext] : 'application/octet-stream';
-        header("Content-Type: $contentType");
-        header("Content-Length: " . filesize($filePath));
+        if (!headers_sent()) {
+            header("Content-Type: $contentType");
+            header("Content-Length: " . filesize($filePath));
+        }
         readfile($filePath);
         exit;
     } else {
         $indexHtml = __DIR__ . '/index.html';
         if (file_exists($indexHtml)) {
-            header("Content-Type: text/html; charset=UTF-8");
+            if (!headers_sent()) header("Content-Type: text/html; charset=UTF-8");
             readfile($indexHtml);
             exit;
         }
@@ -62,7 +66,7 @@ if (stripos($uriPath, '/api') === false) {
 }
 
 // 3. DEFAULT API HEADER (Hanya untuk rute /api)
-header("Content-Type: application/json; charset=UTF-8");
+if (!headers_sent()) header("Content-Type: application/json; charset=UTF-8");
 
 // 4. Hubungkan ke Database (Auto-Migrate & Auto-Seed)
 require_once __DIR__ . '/connection.php';
@@ -77,8 +81,11 @@ $APP_DEBUG        = filter_var(getEnvVar('APP_DEBUG', 'false'), FILTER_VALIDATE_
 
 // 5. Helper Functions
 function sendResponse($success, $data = [], $statusCode = 200) {
-    if (ob_get_length()) ob_clean(); // Bersihkan buffer sebelum kirim JSON
+    while (ob_get_level() > 0) {
+        @ob_end_clean();
+    }
     http_response_code($statusCode);
+    header("Access-Control-Allow-Origin: *");
     header("Content-Type: application/json; charset=UTF-8");
     $response = array_merge(['success' => $success], $data);
     $response = normalizeUrls($response);
@@ -517,7 +524,7 @@ function serveImageFile($filePath) {
     } elseif ($ext === 'svg') {
         $contentType = 'image/svg+xml';
     }
-    if (ob_get_length()) ob_clean();
+    while (ob_get_level() > 0) @ob_end_clean();
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: $contentType");
     header("Content-Length: " . filesize($filePath));
