@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // cli_audit.php â€” Dijalankan via PHP CLI, bukan via web server
 // Tidak memerlukan Apache/Laragon. Langsung jalankan: php cli_audit.php <image_path>
 // Output: JSON lengkap tiap layer ke STDOUT dan file log

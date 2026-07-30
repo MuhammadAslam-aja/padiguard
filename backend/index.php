@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // index.php - Router utama API PHP PadiGuard (MySQL Laragon & Railway Production)
 // Version: 2.4.0-railway-parity (Deterministic, Environment-driven, Precision-calibrated)
 
