@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../config/routes.dart';
 
 /// Enum untuk tipe notifikasi
 enum NotificationType { success, error, warning, info }
@@ -63,7 +64,8 @@ class AppNotification {
   }) {
     void display() {
       try {
-        final messenger = ScaffoldMessenger.maybeOf(context);
+        final targetCtx = rootNavigatorKey.currentContext ?? context;
+        final messenger = ScaffoldMessenger.maybeOf(targetCtx) ?? ScaffoldMessenger.maybeOf(context);
         if (messenger != null && messenger.mounted) {
           messenger.hideCurrentSnackBar();
           messenger.showSnackBar(

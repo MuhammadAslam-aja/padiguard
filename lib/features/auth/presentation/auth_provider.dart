@@ -247,6 +247,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await sharedPrefs.remove(AppConstants.keyUserName);
     await sharedPrefs.remove(AppConstants.keyUserEmail);
 
+    _ref.read(pendingNotificationProvider.notifier).state = const PendingNotification(
+      title: 'Keluar Berhasil',
+      message: 'Sampai jumpa! Anda telah keluar dari aplikasi.',
+      type: NotificationType.info,
+    );
+
     state = AuthState.unauthenticated();
   }
 }

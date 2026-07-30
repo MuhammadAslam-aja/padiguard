@@ -346,6 +346,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPendingNotification();
+    });
+
     ref.listen<PendingNotification?>(pendingNotificationProvider, (prev, next) {
       if (next != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
