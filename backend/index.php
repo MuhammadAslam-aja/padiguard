@@ -830,29 +830,80 @@ function serveImageFile($filePath) {
     exit;
 }
 
-// Route: /image (Serve uploaded images with CORS headers & fallback)
+// Route: /image (Serve uploaded images with CORS headers & smart sample fallback)
 if ($path === '/image' && $method === 'GET') {
     $file = isset($_GET['file']) ? basename($_GET['file']) : '';
     $file = preg_replace('/[^a-zA-Z0-9_\-\.]/', '', $file);
 
+    $datasetSamplesDir = __DIR__ . '/dataset_samples';
+
     if (!empty($file)) {
+        // 1. Cek folder uploads/
         $filePath = $uploadDir . '/' . $file;
         if (file_exists($filePath) && !is_dir($filePath)) {
             serveImageFile($filePath);
         }
 
-        // Cek pencarian file case-insensitive (misal .JPG vs .jpg)
-        $filesInDir = glob($uploadDir . '/*');
-        if ($filesInDir) {
-            foreach ($filesInDir as $fPath) {
-                if (strcasecmp(basename($fPath), $file) === 0) {
-                    serveImageFile($fPath);
-                }
+        // 2. Cek folder dataset_samples/
+        $dsFilePath = $datasetSamplesDir . '/' . $file;
+        if (file_exists($dsFilePath) && !is_dir($dsFilePath)) {
+            serveImageFile($dsFilePath);
+        }
+
+        // 3. Cek pencarian case-insensitive di uploads/ dan dataset_samples/
+        $allFiles = array_merge(
+            glob($uploadDir . '/*') ?: [],
+            glob($datasetSamplesDir . '/*') ?: []
+        );
+        foreach ($allFiles as $fPath) {
+            if (strcasecmp(basename($fPath), $file) === 0) {
+                serveImageFile($fPath);
             }
         }
     }
 
-    // Fallback jika file fisik di folder uploads terhapus (akibat restart container Railway):
+    // 4. SMART FALLBACK AKIBAT RESTART CONTAINER RAILWAY:
+    // Cari data deteksi di database MySQL berdasarkan nama file untuk menyajikan GAMBAR SAMPLE ASLI (JPG)
+    $fallbackSample = $datasetSamplesDir . '/sample_padi_sehat_1.jpg';
+
+    if (isset($pdo) && $pdo && !empty($file)) {
+        try {
+            $stmtDet = $pdo->prepare("SELECT `hamaName`, `kematangan` FROM `detections` WHERE `imageUrl` LIKE ? LIMIT 1");
+            $stmtDet->execute(['%' . $file . '%']);
+            $detRow = $stmtDet->fetch(PDO::FETCH_ASSOC);
+
+            if ($detRow) {
+                $hama = strtolower($detRow['hamaName'] ?? '');
+                $kem = strtolower($detRow['kematangan'] ?? '');
+
+                if (strpos($hama, 'wereng') !== false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_wereng_coklat_1.jpg';
+                } elseif (strpos($hama, 'penggerek') !== false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_penggerek_batang_1.jpg';
+                } elseif (strpos($hama, 'walang') !== false || strpos($hama, 'grayak') !== false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_padi_sehat_1.jpg';
+                } elseif (strpos($kem, 'matang') !== false && strpos($kem, 'setengah') === false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_matang_-_sehat_1.jpg';
+                } elseif (strpos($kem, 'setengah') !== false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_setengah_matang_-_sehat_1.jpg';
+                } elseif (strpos($kem, 'mentah') !== false) {
+                    $fallbackSample = $datasetSamplesDir . '/sample_mentah_-_sehat_1.jpg';
+                }
+            }
+        } catch (\Exception $ex) {}
+    }
+
+    if (file_exists($fallbackSample)) {
+        serveImageFile($fallbackSample);
+    }
+
+    // Secondary fallback ke sampel padi sehat apapun jika tersedia
+    $anySamples = glob($datasetSamplesDir . '/*.jpg');
+    if ($anySamples && isset($anySamples[0]) && file_exists($anySamples[0])) {
+        serveImageFile($anySamples[0]);
+    }
+
+    // Last resort fallback SVG
     header("Access-Control-Allow-Origin: *");
     header("Content-Type: image/svg+xml");
     header("Cache-Control: no-cache, must-revalidate");
