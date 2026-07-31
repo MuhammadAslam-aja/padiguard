@@ -234,6 +234,11 @@ try {
     }
 } catch (\Exception $exAdmin) {}
 
+// Reset foto profil padi lama milik aslam ke avatar manusia Adventurer
+try {
+    $pdo->exec("UPDATE `users` SET `avatar` = 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam' WHERE `email` = 'aslam@gmail.com' AND `avatar` LIKE '%1785467629%'");
+} catch (\Exception $exAv) {}
+
 
 
 // Pastikan 1 Hasil Deteksi default disemaikan jika database baru/kosong
