@@ -234,9 +234,9 @@ try {
     }
 } catch (\Exception $exAdmin) {}
 
-// Reset avatar unsplash/padi jika tidak sengaja tersimpan sebagai foto profil
+// Reset avatar foto profil untuk aslam@gmail.com ke avatar manusia adventurer
 try {
-    $pdo->exec("UPDATE `users` SET `avatar` = 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam' WHERE `email` = 'aslam@gmail.com' AND (`avatar` LIKE '%unsplash%' OR `avatar` LIKE '%photo%')");
+    $pdo->exec("UPDATE `users` SET `avatar` = 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam' WHERE `email` = 'aslam@gmail.com'");
 } catch (\Exception $exAv) {}
 
 // Pastikan 1 Hasil Deteksi default tersisa di database
