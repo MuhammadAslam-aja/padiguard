@@ -19,6 +19,8 @@ RUN echo "upload_max_filesize = 50M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "output_buffering = 4096" >> /usr/local/etc/php/conf.d/uploads.ini \
     && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/uploads.ini
 
+ENV PHP_CLI_SERVER_WORKERS=4
+
 WORKDIR /app
 
 # Copy seluruh source code
