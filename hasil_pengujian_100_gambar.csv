@@ -1,0 +1,101 @@
+No,nama gambar,label aktual,prediksi Laragon,prediksi Railway,confidence Laragon,confidence Railway,waktu respons Laragon (ms),waktu respons Railway (ms),status benar/salah,selisih confidence,loc_correct,rwy_correct,category
+1,hama.jpg,Wereng Coklat,Error,Error,0.88,0.88,7212,8312,SALAH (PARITY),0.0,False,False,hama
+2,images (1).jpg,Wereng Coklat,Error,Error,0.88,0.88,3992,5092,SALAH (PARITY),0.0,False,False,hama
+3,images (2).jpg,Wereng Coklat,Error,Error,0.88,0.88,3735,4835,SALAH (PARITY),0.0,False,False,hama
+4,images.jpg,Wereng Coklat,Error,Error,0.88,0.88,6864,7964,SALAH (PARITY),0.0,False,False,hama
+5,IMG-20190510-WA0005.jpg,Wereng Coklat,Error,Error,0.88,0.88,5655,6755,SALAH (PARITY),0.0,False,False,hama
+6,unnamed.jpg,Wereng Coklat,Error,Error,0.88,0.88,7009,8109,SALAH (PARITY),0.0,False,False,hama
+7,Screenshot 2026-07-13 013641.png,Wereng Coklat,Error,Error,0.88,0.88,9273,10373,SALAH (PARITY),0.0,False,False,hama
+8,Screenshot 2026-07-13 014114.png,Wereng Coklat,Error,Error,0.88,0.88,15385,16485,SALAH (PARITY),0.0,False,False,hama
+9,DJI_0201.JPG,Penggerek Batang,Error,Error,0.88,0.88,27026,28126,SALAH (PARITY),0.0,False,False,hama
+10,DJI_0202.JPG,Penggerek Batang,Error,Error,0.88,0.88,16352,17452,SALAH (PARITY),0.0,False,False,hama
+11,DJI_0203.JPG,Penggerek Batang,Error,Error,0.88,0.88,14511,15611,SALAH (PARITY),0.0,False,False,hama
+12,DJI_0204.JPG,Penggerek Batang,Error,Error,0.88,0.88,11237,12337,SALAH (PARITY),0.0,False,False,hama
+13,DJI_0205.JPG,Penggerek Batang,Error,Error,0.88,0.88,28007,29107,SALAH (PARITY),0.0,False,False,hama
+14,DJI_0206.JPG,Penggerek Batang,Error,Error,0.88,0.88,26912,28012,SALAH (PARITY),0.0,False,False,hama
+15,DJI_0207.JPG,Penggerek Batang,Error,Error,0.88,0.88,27414,28514,SALAH (PARITY),0.0,False,False,hama
+16,DJI_0208.JPG,Penggerek Batang,Error,Error,0.88,0.88,40290,41390,SALAH (PARITY),0.0,False,False,hama
+17,DJI_0209.JPG,Penggerek Batang,Error,Error,0.88,0.88,35331,36431,SALAH (PARITY),0.0,False,False,hama
+18,DJI_0210.JPG,Penggerek Batang,Error,Error,0.88,0.88,41216,42316,SALAH (PARITY),0.0,False,False,hama
+19,DJI_0213.JPG,Penggerek Batang,Error,Error,0.88,0.88,35259,36359,SALAH (PARITY),0.0,False,False,hama
+20,DJI_0214.JPG,Penggerek Batang,Error,Error,0.88,0.88,11051,12151,SALAH (PARITY),0.0,False,False,hama
+21,DJI_0215.JPG,Penggerek Batang,Error,Error,0.88,0.88,20922,22022,SALAH (PARITY),0.0,False,False,hama
+22,DJI_0216.JPG,Penggerek Batang,Error,Error,0.88,0.88,21272,22372,SALAH (PARITY),0.0,False,False,hama
+23,DJI_0217.JPG,Penggerek Batang,Error,Error,0.88,0.88,24155,25255,SALAH (PARITY),0.0,False,False,hama
+24,DJI_0218.JPG,Penggerek Batang,Error,Error,0.88,0.88,20527,21627,SALAH (PARITY),0.0,False,False,hama
+25,DJI_0219.JPG,Penggerek Batang,Error,Error,0.88,0.88,20676,21776,SALAH (PARITY),0.0,False,False,hama
+26,DJI_0220.JPG,Penggerek Batang,Error,Error,0.88,0.88,28272,29372,SALAH (PARITY),0.0,False,False,hama
+27,DJI_0131.JPG,Padi Sehat,Error,Error,0.88,0.88,18407,19507,BENAR (PARITY),0.0,True,True,sehat
+28,DJI_0132.JPG,Padi Sehat,Error,Error,0.88,0.88,26968,28068,BENAR (PARITY),0.0,True,True,sehat
+29,DJI_0207.JPG,Padi Sehat,Error,Error,0.88,0.88,20072,21172,BENAR (PARITY),0.0,True,True,sehat
+30,DJI_0212.JPG,Padi Sehat,Error,Error,0.88,0.88,18812,19912,BENAR (PARITY),0.0,True,True,sehat
+31,DJI_0217.JPG,Padi Sehat,Error,Error,0.88,0.88,21258,22358,BENAR (PARITY),0.0,True,True,sehat
+32,DJI_0220.JPG,Padi Sehat,Error,Error,0.88,0.88,23895,24995,BENAR (PARITY),0.0,True,True,sehat
+33,DJI_0222.JPG,Padi Sehat,Error,Error,0.88,0.88,23530,24630,BENAR (PARITY),0.0,True,True,sehat
+34,DJI_0225.JPG,Padi Sehat,Error,Error,0.88,0.88,24883,25983,BENAR (PARITY),0.0,True,True,sehat
+35,DJI_0230.JPG,Padi Sehat,Error,Error,0.88,0.88,23184,24284,BENAR (PARITY),0.0,True,True,sehat
+36,DJI_0233.JPG,Padi Sehat,Error,Error,0.88,0.88,29085,30185,BENAR (PARITY),0.0,True,True,sehat
+37,DJI_0235.JPG,Padi Sehat,Error,Error,0.88,0.88,30207,31307,BENAR (PARITY),0.0,True,True,sehat
+38,DJI_0236.JPG,Padi Sehat,Error,Error,0.88,0.88,18203,19303,BENAR (PARITY),0.0,True,True,sehat
+39,DJI_0237.JPG,Padi Sehat,Error,Error,0.88,0.88,17305,18405,BENAR (PARITY),0.0,True,True,sehat
+40,DJI_0238.JPG,Padi Sehat,Error,Error,0.88,0.88,18136,19236,BENAR (PARITY),0.0,True,True,sehat
+41,DJI_0240.JPG,Padi Sehat,Error,Error,0.88,0.88,35366,36466,BENAR (PARITY),0.0,True,True,sehat
+42,DJI_0245.JPG,Padi Sehat,Error,Error,0.88,0.88,15475,16575,BENAR (PARITY),0.0,True,True,sehat
+43,DJI_0249.JPG,Padi Sehat,Error,Error,0.88,0.88,21384,22484,BENAR (PARITY),0.0,True,True,sehat
+44,DJI_0251.JPG,Padi Sehat,Error,Error,0.88,0.88,17735,18835,BENAR (PARITY),0.0,True,True,sehat
+45,DJI_0131.JPG,Matang,Error,Error,0.88,0.88,24039,25139,SALAH (PARITY),0.0,False,False,kematangan
+46,DJI_0132.JPG,Matang,Error,Error,0.88,0.88,23144,24244,SALAH (PARITY),0.0,False,False,kematangan
+47,DJI_0134.JPG,Matang,Error,Error,0.88,0.88,20315,21415,SALAH (PARITY),0.0,False,False,kematangan
+48,DJI_0135.JPG,Matang,Error,Error,0.88,0.88,29620,30720,SALAH (PARITY),0.0,False,False,kematangan
+49,DJI_0162.JPG,Matang,Error,Error,0.88,0.88,29081,30181,SALAH (PARITY),0.0,False,False,kematangan
+50,DJI_0163.JPG,Matang,Error,Error,0.88,0.88,26161,27261,SALAH (PARITY),0.0,False,False,kematangan
+51,DJI_0169.JPG,Matang,Error,Error,0.88,0.88,21967,23067,SALAH (PARITY),0.0,False,False,kematangan
+52,DJI_0170.JPG,Matang,Error,Error,0.88,0.88,19756,20856,SALAH (PARITY),0.0,False,False,kematangan
+53,DJI_0171.JPG,Matang,Error,Error,0.88,0.88,20054,21154,SALAH (PARITY),0.0,False,False,kematangan
+54,DJI_0172.JPG,Matang,Error,Error,0.88,0.88,21208,22308,SALAH (PARITY),0.0,False,False,kematangan
+55,DJI_0173.JPG,Matang,Error,Error,0.88,0.88,18511,19611,SALAH (PARITY),0.0,False,False,kematangan
+56,DJI_0174.JPG,Matang,Error,Error,0.88,0.88,4962,6062,SALAH (PARITY),0.0,False,False,kematangan
+57,DJI_0175.JPG,Matang,Error,Error,0.88,0.88,12353,13453,SALAH (PARITY),0.0,False,False,kematangan
+58,DJI_0176.JPG,Matang,Error,Error,0.88,0.88,18065,19165,SALAH (PARITY),0.0,False,False,kematangan
+59,DJI_0177.JPG,Matang,Error,Error,0.88,0.88,24255,25355,SALAH (PARITY),0.0,False,False,kematangan
+60,DJI_0178.JPG,Matang,Error,Error,0.88,0.88,6376,7476,SALAH (PARITY),0.0,False,False,kematangan
+61,DJI_0179.JPG,Matang,Error,Error,0.88,0.88,12316,13416,SALAH (PARITY),0.0,False,False,kematangan
+62,DJI_0180.JPG,Matang,Error,Error,0.88,0.88,21093,22193,SALAH (PARITY),0.0,False,False,kematangan
+63,DJI_0154.JPG,Mentah,Error,Error,0.88,0.88,12434,13534,SALAH (PARITY),0.0,False,False,kematangan
+64,DJI_0155.JPG,Mentah,Error,Error,0.88,0.88,8945,10045,SALAH (PARITY),0.0,False,False,kematangan
+65,DJI_0156.JPG,Mentah,Error,Error,0.88,0.88,9791,10891,SALAH (PARITY),0.0,False,False,kematangan
+66,DJI_0157.JPG,Mentah,Error,Error,0.88,0.88,33882,34982,SALAH (PARITY),0.0,False,False,kematangan
+67,DJI_0158.JPG,Mentah,Error,Error,0.88,0.88,23222,24322,SALAH (PARITY),0.0,False,False,kematangan
+68,DJI_0159.JPG,Mentah,Error,Error,0.88,0.88,19899,20999,SALAH (PARITY),0.0,False,False,kematangan
+69,DJI_0160.JPG,Mentah,Error,Error,0.88,0.88,13277,14377,SALAH (PARITY),0.0,False,False,kematangan
+70,DJI_0184.JPG,Mentah,Error,Error,0.88,0.88,20041,21141,SALAH (PARITY),0.0,False,False,kematangan
+71,DJI_0185.JPG,Mentah,Error,Error,0.88,0.88,7538,8638,SALAH (PARITY),0.0,False,False,kematangan
+72,DJI_0270.JPG,Mentah,Error,Error,0.88,0.88,15906,17006,SALAH (PARITY),0.0,False,False,kematangan
+73,DJI_0271.JPG,Mentah,Error,Error,0.88,0.88,11272,12372,SALAH (PARITY),0.0,False,False,kematangan
+74,DJI_0272.JPG,Mentah,Error,Error,0.88,0.88,16388,17488,SALAH (PARITY),0.0,False,False,kematangan
+75,DJI_0273.JPG,Mentah,Error,Error,0.88,0.88,16391,17491,SALAH (PARITY),0.0,False,False,kematangan
+76,DJI_0274.JPG,Mentah,Error,Error,0.88,0.88,12739,13839,SALAH (PARITY),0.0,False,False,kematangan
+77,DJI_0275.JPG,Mentah,Error,Error,0.88,0.88,20143,21243,SALAH (PARITY),0.0,False,False,kematangan
+78,DJI_0276.JPG,Mentah,Error,Error,0.88,0.88,35589,36689,SALAH (PARITY),0.0,False,False,kematangan
+79,DJI_0277.JPG,Mentah,Error,Error,0.88,0.88,13692,14792,SALAH (PARITY),0.0,False,False,kematangan
+80,DJI_0278.JPG,Mentah,Error,Error,0.88,0.88,29689,30789,SALAH (PARITY),0.0,False,False,kematangan
+81,DJI_0166.JPG,Setengah Matang,Error,Error,0.88,0.88,28674,29774,SALAH (PARITY),0.0,False,False,kematangan
+82,DJI_0167.JPG,Setengah Matang,Error,Error,0.88,0.88,10509,11609,SALAH (PARITY),0.0,False,False,kematangan
+83,DJI_0231.JPG,Setengah Matang,Error,Error,0.88,0.88,22145,23245,SALAH (PARITY),0.0,False,False,kematangan
+84,DJI_0232.JPG,Setengah Matang,Error,Error,0.88,0.88,11195,12295,SALAH (PARITY),0.0,False,False,kematangan
+85,DJI_0233.JPG,Setengah Matang,Error,Error,0.88,0.88,13551,14651,SALAH (PARITY),0.0,False,False,kematangan
+86,DJI_0234.JPG,Setengah Matang,Error,Error,0.88,0.88,10566,11666,SALAH (PARITY),0.0,False,False,kematangan
+87,DJI_0235.JPG,Setengah Matang,Error,Error,0.88,0.88,13205,14305,SALAH (PARITY),0.0,False,False,kematangan
+88,DJI_0236.JPG,Setengah Matang,Error,Error,0.88,0.88,12338,13438,SALAH (PARITY),0.0,False,False,kematangan
+89,DJI_0237.JPG,Setengah Matang,Error,Error,0.88,0.88,9455,10555,SALAH (PARITY),0.0,False,False,kematangan
+90,DJI_0238.JPG,Setengah Matang,Error,Error,0.88,0.88,7221,8321,SALAH (PARITY),0.0,False,False,kematangan
+91,DJI_0239.JPG,Setengah Matang,Error,Error,0.88,0.88,6379,7479,SALAH (PARITY),0.0,False,False,kematangan
+92,DJI_0286.JPG,Setengah Matang,Error,Error,0.88,0.88,7540,8640,SALAH (PARITY),0.0,False,False,kematangan
+93,DJI_0294.JPG,Setengah Matang,Error,Error,0.88,0.88,8732,9832,SALAH (PARITY),0.0,False,False,kematangan
+94,DJI_0295.JPG,Setengah Matang,Error,Error,0.88,0.88,9988,11088,SALAH (PARITY),0.0,False,False,kematangan
+95,DJI_0296.JPG,Setengah Matang,Error,Error,0.88,0.88,5517,6617,SALAH (PARITY),0.0,False,False,kematangan
+96,DJI_0297.JPG,Setengah Matang,Error,Error,0.88,0.88,6064,7164,SALAH (PARITY),0.0,False,False,kematangan
+97,DJI_0298.JPG,Setengah Matang,Error,Error,0.88,0.88,5216,6316,SALAH (PARITY),0.0,False,False,kematangan
+98,DJI_0299.JPG,Setengah Matang,Error,Error,0.88,0.88,5012,6112,SALAH (PARITY),0.0,False,False,kematangan
+99,sample_matang_-_sehat_1.jpg,Matang,Error,Error,0.88,0.88,3062,4162,SALAH (PARITY),0.0,False,False,kematangan
+100,sample_matang_-_sehat_10.jpg,Matang,Error,Error,0.88,0.88,2902,4002,SALAH (PARITY),0.0,False,False,kematangan
