@@ -170,19 +170,23 @@ try {
     }
 
     // Pastikan tabel password_resets ada (untuk fitur Lupa Password via OTP Email)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS `password_resets` (
-        `id` int NOT NULL AUTO_INCREMENT,
-        `email` varchar(100) NOT NULL,
-        `otp_token` varchar(10) NOT NULL,
-        `expires_at` datetime NOT NULL,
-        `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (`id`),
-        INDEX `idx_email` (`email`),
-        INDEX `idx_otp` (`otp_token`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Hapus OTP yang sudah kadaluarsa (cleanup otomatis)
-    $pdo->exec("DELETE FROM `password_resets` WHERE `expires_at` < NOW()");
+    // Dibungkus try-catch sendiri agar tidak merusak flow koneksi utama
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS `password_resets` (
+            `id` int NOT NULL AUTO_INCREMENT,
+            `email` varchar(100) NOT NULL,
+            `otp_token` varchar(10) NOT NULL,
+            `expires_at` datetime NOT NULL,
+            `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_email` (`email`),
+            KEY `idx_otp` (`otp_token`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Hapus OTP yang sudah kadaluarsa (cleanup otomatis, abaikan jika gagal)
+        @$pdo->exec("DELETE FROM `password_resets` WHERE `expires_at` < NOW()");
+    } catch (\PDOException $migErr) {
+        // Abaikan error migrasi password_resets — tidak kritis
+    }
 
 } catch (\PDOException $e) {
     // Jalankan database.sql

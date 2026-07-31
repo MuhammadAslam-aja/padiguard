@@ -17,6 +17,7 @@ function sendPadiGuardEmail($toEmail, $toName, $subject, $htmlBody) {
     }
 
     // ====== BUKA KONEKSI TCP ke SMTP Server ======
+    // Timeout 8 detik agar tidak melebihi Dio client timeout (15 detik)
     $errno  = 0;
     $errstr = '';
     $ctx    = stream_context_create([
@@ -27,26 +28,43 @@ function sendPadiGuardEmail($toEmail, $toName, $subject, $htmlBody) {
         ]
     ]);
 
+    $socket = null;
+    $useSSL = false;
+
+    // Coba port 587 (STARTTLS) dulu
     $socket = @stream_socket_client(
-        "tcp://{$smtpHost}:{$smtpPort}",
-        $errno, $errstr, 30,
+        "tcp://{$smtpHost}:587",
+        $errno, $errstr, 8,
         STREAM_CLIENT_CONNECT,
         $ctx
     );
 
+    // Fallback: coba port 465 (SSL langsung) jika 587 gagal
     if (!$socket) {
-        error_log("[PadiGuard Mailer] Gagal konek ke SMTP: {$errstr} ({$errno})");
+        $socket = @stream_socket_client(
+            "ssl://{$smtpHost}:465",
+            $errno, $errstr, 8,
+            STREAM_CLIENT_CONNECT,
+            $ctx
+        );
+        $useSSL = true;
+    }
+
+    if (!$socket) {
+        error_log("[PadiGuard Mailer] Gagal konek ke SMTP 587 dan 465: {$errstr} ({$errno})");
         return false;
     }
 
-    stream_set_timeout($socket, 30);
+    stream_set_timeout($socket, 8);
 
     // Helper: baca respons SMTP (bisa multiline)
     $readResp = function() use ($socket) {
         $resp = '';
-        while ($line = fgets($socket, 1024)) {
+        while ($line = @fgets($socket, 1024)) {
             $resp .= $line;
             if (strlen($line) >= 4 && $line[3] === ' ') break;
+            $info = stream_get_meta_data($socket);
+            if ($info['timed_out']) break;
         }
         return $resp;
     };
@@ -73,27 +91,29 @@ function sendPadiGuardEmail($toEmail, $toName, $subject, $htmlBody) {
         return false;
     }
 
-    // STARTTLS - upgrade koneksi ke TLS
-    $resp = $cmd("STARTTLS");
-    if (strpos($resp, '220') !== 0) {
-        fclose($socket);
-        error_log("[PadiGuard Mailer] STARTTLS gagal: {$resp}");
-        return false;
-    }
+    // Jika port 587 (bukan SSL langsung), lakukan STARTTLS
+    if (!$useSSL) {
+        $resp = $cmd("STARTTLS");
+        if (strpos($resp, '220') !== 0) {
+            fclose($socket);
+            error_log("[PadiGuard Mailer] STARTTLS gagal: {$resp}");
+            return false;
+        }
 
-    // Upgrade stream ke TLS
-    $tlsOk = stream_socket_enable_crypto(
-        $socket, true,
-        STREAM_CRYPTO_METHOD_TLS_CLIENT
-    );
-    if (!$tlsOk) {
-        fclose($socket);
-        error_log("[PadiGuard Mailer] Upgrade TLS gagal.");
-        return false;
-    }
+        // Upgrade stream ke TLS
+        $tlsOk = @stream_socket_enable_crypto(
+            $socket, true,
+            STREAM_CRYPTO_METHOD_TLS_CLIENT
+        );
+        if (!$tlsOk) {
+            fclose($socket);
+            error_log("[PadiGuard Mailer] Upgrade TLS gagal.");
+            return false;
+        }
 
-    // EHLO ulang setelah TLS
-    $cmd("EHLO padiguard.app");
+        // EHLO ulang setelah TLS
+        $cmd("EHLO padiguard.app");
+    }
 
     // AUTH LOGIN
     $resp = $cmd("AUTH LOGIN");
