@@ -52,10 +52,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (success) {
       ref.read(pendingNotificationProvider.notifier).state = const PendingNotification(
         title: 'Registrasi Berhasil! 🎉',
-        message: 'Akun Anda telah terdaftar. Silakan login.',
+        message: 'Akun Anda telah terdaftar. Silakan login dengan email dan password baru.',
         type: NotificationType.success,
       );
-      if (mounted) context.pop();
+      if (mounted) context.go('/login'); // go() bukan pop() agar login page dibuat ulang & notif muncul via initState
     } else {
       if (mounted) {
         final state = ref.read(authProvider);
