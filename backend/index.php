@@ -527,14 +527,14 @@ if ($path === '/weather/current' && $method === 'GET') {
 
 // Route: /auth/login
 if ($path === '/auth/login' && $method === 'POST') {
-    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
-    $password = isset($inputData['password']) ? $inputData['password'] : '';
+    $email = isset($inputData['email']) ? strtolower(trim($inputData['email'])) : '';
+    $password = isset($inputData['password']) ? trim($inputData['password']) : '';
     
     if (empty($email) || empty($password)) {
         sendResponse(false, ['message' => 'Email dan password harus diisi.'], 400);
     }
     
-    $stmt = $pdo->prepare("SELECT * FROM `users` WHERE `email` = ?");
+    $stmt = $pdo->prepare("SELECT * FROM `users` WHERE LOWER(TRIM(`email`)) = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
@@ -553,15 +553,15 @@ if ($path === '/auth/login' && $method === 'POST') {
 // Route: /auth/register
 if ($path === '/auth/register' && $method === 'POST') {
     $name = isset($inputData['name']) ? trim($inputData['name']) : '';
-    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
-    $password = isset($inputData['password']) ? $inputData['password'] : '';
+    $email = isset($inputData['email']) ? strtolower(trim($inputData['email'])) : '';
+    $password = isset($inputData['password']) ? trim($inputData['password']) : '';
     $role = isset($inputData['role']) ? trim($inputData['role']) : 'petani';
     
     if (empty($name) || empty($email) || empty($password)) {
         sendResponse(false, ['message' => 'Semua kolom pendaftaran harus diisi.'], 400);
     }
     
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM `users` WHERE `email` = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM `users` WHERE LOWER(TRIM(`email`)) = ?");
     $stmt->execute([$email]);
     if ($stmt->fetchColumn() > 0) {
         sendResponse(false, ['message' => 'Email sudah terdaftar.'], 400);
