@@ -11,8 +11,8 @@ class DioClient {
 
   DioClient({required this.secureStorage}) : dio = Dio() {
     dio.options.baseUrl = AppConstants.baseUrl;
-    dio.options.connectTimeout = const Duration(seconds: 15);
-    dio.options.receiveTimeout = const Duration(seconds: 15);
+    dio.options.connectTimeout = const Duration(seconds: 30);
+    dio.options.receiveTimeout = const Duration(seconds: 45);
     
     // Add Interceptors
     dio.interceptors.add(
