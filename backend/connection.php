@@ -199,7 +199,7 @@ try {
         $pdo->exec("ALTER TABLE `dataset` ADD COLUMN `hash` varchar(64) DEFAULT NULL");
     } catch (\PDOException $err) {}
     
-    // Seed default users (Hanya 1 User)
+    // Seed default users (Hanya 1 User: aslam@gmail.com)
     $defaultUsers = [
         [
             'id' => 'u_1',
@@ -216,40 +216,16 @@ try {
     foreach ($defaultUsers as $u) {
         $stmt->execute($u);
     }
-    
-    // Seed default detections (Hanya 1 Hasil Deteksi)
-    $defaultDetections = [
-        [
-            'id' => 'd_1',
-            'userEmail' => 'aslam@gmail.com',
-            'userName' => 'aslam',
-            'date' => '2026-06-25 10:30:00',
-            'imageUrl' => 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&q=80&w=500',
-            'hamaName' => 'Wereng Coklat',
-            'hamaConfidence' => 0.88,
-            'kematangan' => 'Setengah Matang',
-            'kematanganConfidence' => 0.94,
-            'boundingBoxes' => json_encode([
-                ['label' => 'Wereng Coklat (88%)', 'xMin' => 0.2, 'yMin' => 0.3, 'xMax' => 0.5, 'yMax' => 0.6, 'isHama' => true],
-                ['label' => 'Setengah Matang (94%)', 'xMin' => 0.1, 'yMin' => 0.1, 'xMax' => 0.9, 'yMax' => 0.9, 'isHama' => false],
-            ]),
-            'dangerLevel' => 'Tinggi',
-            'description' => 'Wereng Coklat (Nilaparvata lugens) menghisap cairan tanaman padi menyebabkan daun menguning, mengering (hopperburn), dan tanaman mati.',
-            'treatment' => "1. Atur jarak tanam legowo untuk mengurangi kelembapan.\n2. Lestarikan musuh alami seperti laba-laba.\n3. Semprotkan insektisida pymetrozine jika populasi tinggi."
-        ]
-    ];
-    
-    $stmtDet = $pdo->prepare("INSERT INTO `detections` (`id`, `userEmail`, `userName`, `date`, `imageUrl`, `hamaName`, `hamaConfidence`, `kematangan`, `kematanganConfidence`, `boundingBoxes`, `dangerLevel`, `description`, `treatment`) VALUES (:id, :userEmail, :userName, :date, :imageUrl, :hamaName, :hamaConfidence, :kematangan, :kematanganConfidence, :boundingBoxes, :dangerLevel, :description, :treatment)");
-    foreach ($defaultDetections as $d) {
-        $stmtDet->execute($d);
-    }
 }
 
-// Steering / Pruning Database Real-time: Sisakan tepat 1 User dan 1 Hasil Deteksi
+// Sterilisasi Database: Kosongkan seluruh riwayat deteksi (0 deteksi) & sisakan 1 user (aslam@gmail.com)
 try {
-    // 1. Sisakan tepat 1 user (prioritaskan aslam@gmail.com jika ada, atau 1 user terbaru)
+    // 1. Sterilkan / kosongkan tabel detections (0 deteksi)
+    $pdo->exec("DELETE FROM `detections`");
+
+    // 2. Sisakan tepat 1 akun user (aslam@gmail.com)
     $allUsers = $pdo->query("SELECT `id`, `email` FROM `users` ORDER BY `createdAt` DESC")->fetchAll();
-    if (count($allUsers) > 1) {
+    if (count($allUsers) > 0) {
         $keepUser = $allUsers[0];
         foreach ($allUsers as $u) {
             if ($u['email'] === 'aslam@gmail.com') {
@@ -257,20 +233,9 @@ try {
                 break;
             }
         }
-        $keepId = $keepUser['id'];
-        $keepEmail = $keepUser['email'];
-
-        $pdo->prepare("DELETE FROM `users` WHERE `id` != ?")->execute([$keepId]);
-        $pdo->prepare("UPDATE `detections` SET `userEmail` = ?")->execute([$keepEmail]);
+        $pdo->prepare("DELETE FROM `users` WHERE `id` != ?")->execute([$keepUser['id']]);
     }
-
-    // 2. Sisakan tepat 1 hasil deteksi
-    $allDets = $pdo->query("SELECT `id` FROM `detections` ORDER BY `date` DESC")->fetchAll();
-    if (count($allDets) > 1) {
-        $keepDetId = $allDets[0]['id'];
-        $pdo->prepare("DELETE FROM `detections` WHERE `id` != ?")->execute([$keepDetId]);
-    }
-} catch (\Exception $exSteer) {}
+} catch (\Exception $exSterile) {}
 
 // Pastikan nilai performa model diperbarui sesuai hasil training Roboflow terbaru (real-time migration)
 try {
