@@ -218,9 +218,8 @@ try {
     }
 }
 
-// Sterilisasi Database: Sisakan TEPAT 1 Akun Admin (admin@gmail.com) & TEPAT 1 Hasil Deteksi
+// Pastikan 1 Akun Admin default ada di database jika belum pernah ada akun
 try {
-    // 1. Pastikan 1 Akun Admin ada di database
     $adminExist = $pdo->query("SELECT COUNT(*) FROM `users` WHERE `email` = 'admin@gmail.com'")->fetchColumn();
     if (!$adminExist) {
         $stmtAdmin = $pdo->prepare("INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `avatar`) VALUES (?, ?, ?, ?, ?, ?)");
@@ -233,11 +232,10 @@ try {
             'https://api.dicebear.com/7.x/bottts/png?seed=Admin'
         ]);
     }
+} catch (\Exception $exAdmin) {}
 
-    // Hapus seluruh akun LAINNYA sehingga HANYA 1 AKUN ADMIN (admin@gmail.com) yang tersisa!
-    $pdo->exec("DELETE FROM `users` WHERE `email` != 'admin@gmail.com'");
-
-    // 2. Pastikan TEPAT 1 Hasil Deteksi tersisa di database
+// Pastikan 1 Hasil Deteksi default tersisa di database
+try {
     $detCount = (int)$pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
     if ($detCount === 0) {
         $stmtDet = $pdo->prepare("INSERT INTO `detections` (`id`, `userEmail`, `userName`, `date`, `imageUrl`, `hamaName`, `hamaConfidence`, `kematangan`, `kematanganConfidence`, `boundingBoxes`, `dangerLevel`, `description`, `treatment`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
