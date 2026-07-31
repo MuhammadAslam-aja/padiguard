@@ -59,11 +59,29 @@ class WeatherService {
     }
   }
 
+  // ─── Weather Caching ────────────────────────────────────────────────────────
+  static WeatherData? _cachedWeather;
+  static DateTime? _cacheTime;
+
+  /// Get cached weather if less than 30 minutes old
+  static WeatherData? get cachedWeather {
+    if (_cachedWeather != null && _cacheTime != null) {
+      if (DateTime.now().difference(_cacheTime!).inMinutes < 30) {
+        return _cachedWeather;
+      }
+    }
+    return null;
+  }
+
   // ─── Weather via Backend Proxy ─────────────────────────────────────────────
 
   /// Fetch weather via backend PHP proxy (Open-Meteo + Nominatim)
   /// Endpoint: GET /weather/current?lat=...&lon=...
-  static Future<WeatherData?> fetchWeatherByCoords(double lat, double lon) async {
+  static Future<WeatherData?> fetchWeatherByCoords(double lat, double lon, {bool forceRefresh = false}) async {
+    if (!forceRefresh && cachedWeather != null) {
+      return cachedWeather;
+    }
+
     try {
       final base = AppConstants.baseUrl;
       final endpoint = (base.endsWith('/api/') || base.endsWith('/api'))
@@ -77,7 +95,7 @@ class WeatherService {
         final data = jsonDecode(response.body);
         if (data['success'] == true && data['weather'] != null) {
           final w = data['weather'] as Map<String, dynamic>;
-          return WeatherData(
+          final weather = WeatherData(
             cityName:    w['city_name']   ?? '',
             regionName:  w['region_name'] ?? 'Lokasi Anda',
             temperature: (w['temperature'] as num).toDouble(),
@@ -87,6 +105,9 @@ class WeatherService {
             lat:          (w['lat']        as num).toDouble(),
             lon:          (w['lon']        as num).toDouble(),
           );
+          _cachedWeather = weather;
+          _cacheTime = DateTime.now();
+          return weather;
         }
       } else {
         debugPrint('Weather proxy error: ${response.statusCode} ${response.body}');
@@ -94,7 +115,7 @@ class WeatherService {
     } catch (e) {
       debugPrint('Weather fetch error: $e');
     }
-    return null;
+    return cachedWeather;
   }
 
   // ─── Icon & Recommendation ─────────────────────────────────────────────────

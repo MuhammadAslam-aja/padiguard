@@ -163,14 +163,22 @@ class _PetaniHomePageState extends ConsumerState<PetaniHomePage> {
     }
   }
 
-  Future<void> _loadWeather() async {
+  Future<void> _loadWeather({bool forceRefresh = false}) async {
     if (!mounted) return;
+    if (!forceRefresh && WeatherService.cachedWeather != null) {
+      setState(() {
+        _weather = WeatherService.cachedWeather;
+        _isLoadingWeather = false;
+        _weatherError = '';
+      });
+      return;
+    }
     setState(() { _isLoadingWeather = true; _weatherError = ''; });
     try {
       final position = await WeatherService.getCurrentPosition();
       if (position != null) {
         final weather = await WeatherService.fetchWeatherByCoords(
-          position.latitude, position.longitude);
+          position.latitude, position.longitude, forceRefresh: forceRefresh);
         if (mounted) {
           setState(() {
             _weather = weather;

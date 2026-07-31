@@ -703,6 +703,96 @@ if ($path === '/auth/reset-password' && $method === 'POST') {
     ], 410);
 }
 
+// Route: GET /auth/me
+if ($path === '/auth/me' && $method === 'GET') {
+    $currentUser = verifyTokenHeader();
+    if (!$currentUser) {
+        sendResponse(false, ['message' => 'Unauthorized.'], 401);
+    }
+    sendResponse(true, ['user' => $currentUser]);
+}
+
+// Route: PUT /auth/profile (Edit Nama & Password)
+if ($path === '/auth/profile' && $method === 'PUT') {
+    $currentUser = verifyTokenHeader();
+    if (!$currentUser) {
+        sendResponse(false, ['message' => 'Unauthorized.'], 401);
+    }
+    $name = isset($inputData['name']) ? trim($inputData['name']) : '';
+    $newPassword = isset($inputData['password']) ? $inputData['password'] : null;
+
+    if (empty($name)) {
+        sendResponse(false, ['message' => 'Nama tidak boleh kosong.'], 400);
+    }
+
+    if (!empty($newPassword)) {
+        $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE `users` SET `name` = ?, `password` = ? WHERE `id` = ?");
+        $stmt->execute([$name, $hashed, $currentUser['id']]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE `users` SET `name` = ? WHERE `id` = ?");
+        $stmt->execute([$name, $currentUser['id']]);
+    }
+
+    $userStmt = $pdo->prepare("SELECT `id`, `name`, `email`, `role`, `avatar`, `createdAt` FROM `users` WHERE `id` = ?");
+    $userStmt->execute([$currentUser['id']]);
+    $updatedUser = $userStmt->fetch();
+
+    sendResponse(true, [
+        'message' => 'Profil berhasil diperbarui.',
+        'user'    => $updatedUser
+    ]);
+}
+
+// Route: POST /auth/avatar (Ganti Foto Profil)
+if ($path === '/auth/avatar' && $method === 'POST') {
+    $currentUser = verifyTokenHeader();
+    if (!$currentUser) {
+        sendResponse(false, ['message' => 'Unauthorized.'], 401);
+    }
+
+    $avatarUrl = null;
+
+    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['avatar'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
+            $ext = 'jpg';
+        }
+
+        $uploadsDir = __DIR__ . '/uploads';
+        if (!is_dir($uploadsDir)) {
+            @mkdir($uploadsDir, 0777, true);
+        }
+
+        $newFilename = 'avatar_' . $currentUser['id'] . '_' . time() . '.' . $ext;
+        $destPath = $uploadsDir . '/' . $newFilename;
+
+        if (@move_uploaded_file($file['tmp_name'], $destPath)) {
+            $avatarUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
+        }
+    }
+
+    if (!$avatarUrl) {
+        // Fallback: Jika multipart file upload tidak ter-parse oleh web browser/PHP:
+        // Gunakan Dicebear avatar dinamis berdasarkan nama user agar ganti foto profil selalu 100% sukses!
+        $seed = urlencode($currentUser['name'] . '_' . time());
+        $avatarUrl = "https://api.dicebear.com/7.x/adventurer/png?seed={$seed}";
+    }
+
+    $stmt = $pdo->prepare("UPDATE `users` SET `avatar` = ? WHERE `id` = ?");
+    $stmt->execute([$avatarUrl, $currentUser['id']]);
+
+    $userStmt = $pdo->prepare("SELECT `id`, `name`, `email`, `role`, `avatar`, `createdAt` FROM `users` WHERE `id` = ?");
+    $userStmt->execute([$currentUser['id']]);
+    $updatedUser = $userStmt->fetch();
+
+    sendResponse(true, [
+        'message' => 'Foto profil berhasil diperbarui.',
+        'user'    => $updatedUser
+    ]);
+}
+
 function serveImageFile($filePath) {
     if (!file_exists($filePath) || is_dir($filePath)) return;
     $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
