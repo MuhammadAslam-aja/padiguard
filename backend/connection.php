@@ -218,22 +218,55 @@ try {
     }
 }
 
-// Sterilisasi Database: Kosongkan seluruh riwayat deteksi (0 deteksi) & sisakan 1 user (aslam@gmail.com)
+// Sterilisasi Database: Sisakan TEPAT 1 Akun Admin (admin@gmail.com) & TEPAT 1 Hasil Deteksi
 try {
-    // 1. Sterilkan / kosongkan tabel detections (0 deteksi)
-    $pdo->exec("DELETE FROM `detections`");
+    // 1. Pastikan 1 Akun Admin ada di database
+    $adminExist = $pdo->query("SELECT COUNT(*) FROM `users` WHERE `email` = 'admin@gmail.com'")->fetchColumn();
+    if (!$adminExist) {
+        $stmtAdmin = $pdo->prepare("INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `avatar`) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmtAdmin->execute([
+            'u_admin',
+            'Admin PadiGuard',
+            'admin@gmail.com',
+            password_hash('admin123', PASSWORD_DEFAULT),
+            'admin',
+            'https://api.dicebear.com/7.x/bottts/png?seed=Admin'
+        ]);
+    }
 
-    // 2. Sisakan tepat 1 akun user (aslam@gmail.com)
-    $allUsers = $pdo->query("SELECT `id`, `email` FROM `users` ORDER BY `createdAt` DESC")->fetchAll();
-    if (count($allUsers) > 0) {
-        $keepUser = $allUsers[0];
-        foreach ($allUsers as $u) {
-            if ($u['email'] === 'aslam@gmail.com') {
-                $keepUser = $u;
-                break;
-            }
+    // Hapus seluruh akun LAINNYA sehingga HANYA 1 AKUN ADMIN (admin@gmail.com) yang tersisa!
+    $pdo->exec("DELETE FROM `users` WHERE `email` != 'admin@gmail.com'");
+
+    // 2. Pastikan TEPAT 1 Hasil Deteksi tersisa di database
+    $detCount = (int)$pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
+    if ($detCount === 0) {
+        $stmtDet = $pdo->prepare("INSERT INTO `detections` (`id`, `userEmail`, `userName`, `date`, `imageUrl`, `hamaName`, `hamaConfidence`, `kematangan`, `kematanganConfidence`, `boundingBoxes`, `dangerLevel`, `description`, `treatment`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmtDet->execute([
+            'd_1',
+            'admin@gmail.com',
+            'Admin PadiGuard',
+            '2026-06-25 10:30:00',
+            'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&q=80&w=500',
+            'Wereng Coklat',
+            0.88,
+            'Setengah Matang',
+            0.94,
+            json_encode([
+                ['label' => 'Wereng Coklat (88%)', 'xMin' => 0.2, 'yMin' => 0.3, 'xMax' => 0.5, 'yMax' => 0.6, 'isHama' => true],
+                ['label' => 'Setengah Matang (94%)', 'xMin' => 0.1, 'yMin' => 0.1, 'xMax' => 0.9, 'yMax' => 0.9, 'isHama' => false],
+            ]),
+            'Tinggi',
+            'Wereng Coklat (Nilaparvata lugens) menghisap cairan tanaman padi menyebabkan daun menguning, mengering (hopperburn), dan tanaman mati.',
+            "1. Atur jarak tanam legowo untuk mengurangi kelembapan.\n2. Lestarikan musuh alami seperti laba-laba.\n3. Semprotkan insektisida pymetrozine jika populasi tinggi."
+        ]);
+    } else {
+        // Jika ada lebih dari 1 deteksi, simpan 1 deteksi terbaru dan hapus sisanya
+        $keepDet = $pdo->query("SELECT `id` FROM `detections` ORDER BY `date` DESC LIMIT 1")->fetch();
+        if ($keepDet) {
+            $keepId = $keepDet['id'];
+            $pdo->prepare("DELETE FROM `detections` WHERE `id` != ?")->execute([$keepId]);
+            $pdo->prepare("UPDATE `detections` SET `userEmail` = 'admin@gmail.com', `userName` = 'Admin PadiGuard' WHERE `id` = ?")->execute([$keepId]);
         }
-        $pdo->prepare("DELETE FROM `users` WHERE `id` != ?")->execute([$keepUser['id']]);
     }
 } catch (\Exception $exSterile) {}
 
