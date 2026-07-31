@@ -129,27 +129,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
-          data: isDark
-              ? ThemeData.dark().copyWith(
-                  scaffoldBackgroundColor: const Color(0xFF1E293B),
-                  dialogBackgroundColor: const Color(0xFF1E293B),
-                  colorScheme: const ColorScheme.dark(
-                    primary: Color(0xFF22C55E),
-                    onPrimary: Colors.white,
-                    surface: Color(0xFF1E293B),
-                    onSurface: Colors.white,
-                  ),
-                  dialogTheme: const DialogThemeData(
-                    backgroundColor: Color(0xFF1E293B),
-                  ),
-                )
-              : ThemeData.light().copyWith(
-                  colorScheme: ColorScheme.light(
-                    primary: Theme.of(context).primaryColor,
-                    onPrimary: Colors.white,
-                    onSurface: AppTheme.textDark,
-                  ),
-                ),
+          data: isDark ? AppTheme.darkTheme : AppTheme.lightTheme,
           child: child!,
         );
       },

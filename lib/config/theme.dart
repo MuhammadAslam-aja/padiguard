@@ -220,6 +220,32 @@ class AppTheme {
         labelStyle: TextStyle(color: textDarkMuted, fontFamily: 'Poppins'),
         hintStyle: TextStyle(color: textDarkMuted.withOpacity(0.6), fontFamily: 'Poppins'),
       ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: surfaceDark,
+        surfaceTintColor: Colors.transparent,
+      ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: surfaceDark,
+        headerBackgroundColor: backgroundDark,
+        headerForegroundColor: textLight,
+        surfaceTintColor: Colors.transparent,
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return primaryDark;
+          return null;
+        }),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return textLight;
+        }),
+        yearForegroundColor: WidgetStateProperty.all(textLight),
+        weekdayStyle: const TextStyle(color: textDarkMuted),
+        cancelButtonStyle: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all(primaryDark),
+        ),
+        confirmButtonStyle: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all(primaryDark),
+        ),
+      ),
     );
   }
 }
