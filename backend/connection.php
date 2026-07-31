@@ -239,15 +239,15 @@ try {
     $pdo->exec("UPDATE `users` SET `avatar` = 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam' WHERE `email` = 'aslam@gmail.com'");
 } catch (\Exception $exAv) {}
 
-// Pastikan 1 Hasil Deteksi default tersisa di database
+// Pastikan 1 Hasil Deteksi default disemaikan jika database baru/kosong
 try {
     $detCount = (int)$pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
     if ($detCount === 0) {
         $stmtDet = $pdo->prepare("INSERT INTO `detections` (`id`, `userEmail`, `userName`, `date`, `imageUrl`, `hamaName`, `hamaConfidence`, `kematangan`, `kematanganConfidence`, `boundingBoxes`, `dangerLevel`, `description`, `treatment`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmtDet->execute([
             'd_1',
-            'admin@gmail.com',
-            'Admin PadiGuard',
+            'aslam@gmail.com',
+            'aslam',
             '2026-06-25 10:30:00',
             'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&q=80&w=500',
             'Wereng Coklat',
@@ -262,14 +262,6 @@ try {
             'Wereng Coklat (Nilaparvata lugens) menghisap cairan tanaman padi menyebabkan daun menguning, mengering (hopperburn), dan tanaman mati.',
             "1. Atur jarak tanam legowo untuk mengurangi kelembapan.\n2. Lestarikan musuh alami seperti laba-laba.\n3. Semprotkan insektisida pymetrozine jika populasi tinggi."
         ]);
-    } else {
-        // Jika ada lebih dari 1 deteksi, simpan 1 deteksi terbaru dan hapus sisanya
-        $keepDet = $pdo->query("SELECT `id` FROM `detections` ORDER BY `date` DESC LIMIT 1")->fetch();
-        if ($keepDet) {
-            $keepId = $keepDet['id'];
-            $pdo->prepare("DELETE FROM `detections` WHERE `id` != ?")->execute([$keepId]);
-            $pdo->prepare("UPDATE `detections` SET `userEmail` = 'admin@gmail.com', `userName` = 'Admin PadiGuard' WHERE `id` = ?")->execute([$keepId]);
-        }
     }
 } catch (\Exception $exSterile) {}
 
