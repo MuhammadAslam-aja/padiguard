@@ -217,8 +217,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           filename: filename,
         );
         
+        final base64Image = base64Encode(bytes);
         final formData = FormData.fromMap({
           'avatar': file,
+          'avatar_base64': base64Image,
         });
         
         final response = await dioClient.dio.post(

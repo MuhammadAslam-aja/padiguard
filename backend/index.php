@@ -752,17 +752,17 @@ if ($path === '/auth/avatar' && $method === 'POST') {
     }
 
     $avatarUrl = null;
+    $uploadsDir = __DIR__ . '/uploads';
+    if (!is_dir($uploadsDir)) {
+        @mkdir($uploadsDir, 0777, true);
+    }
 
+    // 1. Cek upload file multipart $_FILES['avatar']
     if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['avatar'];
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
             $ext = 'jpg';
-        }
-
-        $uploadsDir = __DIR__ . '/uploads';
-        if (!is_dir($uploadsDir)) {
-            @mkdir($uploadsDir, 0777, true);
         }
 
         $newFilename = 'avatar_' . $currentUser['id'] . '_' . time() . '.' . $ext;
@@ -773,9 +773,24 @@ if ($path === '/auth/avatar' && $method === 'POST') {
         }
     }
 
+    // 2. Cek payload base64 (avatar_base64 dari Flutter Web)
+    $b64Data = isset($_POST['avatar_base64']) ? $_POST['avatar_base64'] : (isset($inputData['avatar_base64']) ? $inputData['avatar_base64'] : null);
+    if (!$avatarUrl && !empty($b64Data)) {
+        if (strpos($b64Data, ',') !== false) {
+            $b64Data = explode(',', $b64Data)[1];
+        }
+        $rawBytes = base64_decode($b64Data);
+        if ($rawBytes !== false && strlen($rawBytes) > 0) {
+            $newFilename = 'avatar_' . $currentUser['id'] . '_' . time() . '.jpg';
+            $destPath = $uploadsDir . '/' . $newFilename;
+            if (@file_put_contents($destPath, $rawBytes) !== false) {
+                $avatarUrl = getBaseUrl() . '/api/image?file=' . $newFilename;
+            }
+        }
+    }
+
     if (!$avatarUrl) {
-        // Fallback: Jika multipart file upload tidak ter-parse oleh web browser/PHP:
-        // Gunakan Dicebear avatar dinamis berdasarkan nama user agar ganti foto profil selalu 100% sukses!
+        // Fallback jika tidak ada data gambar
         $seed = urlencode($currentUser['name'] . '_' . time());
         $avatarUrl = "https://api.dicebear.com/7.x/adventurer/png?seed={$seed}";
     }
