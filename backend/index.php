@@ -1495,9 +1495,26 @@ if ($adminUserId && $method === 'PUT') {
     sendResponse(true, ['message' => 'Data user berhasil diperbarui.']);
 }
 if ($adminUserId && $method === 'DELETE') {
+    // 1. Cari email user yang akan dihapus
+    $userStmt = $pdo->prepare("SELECT `email` FROM `users` WHERE `id` = ?");
+    $userStmt->execute([$adminUserId]);
+    $userToDelete = $userStmt->fetch();
+
+    if ($userToDelete && !empty($userToDelete['email'])) {
+        $emailToDelete = $userToDelete['email'];
+        // 2. Hapus seluruh data riwayat scan deteksi milik user ini
+        $delDetStmt = $pdo->prepare("DELETE FROM `detections` WHERE `userEmail` = ?");
+        $delDetStmt->execute([$emailToDelete]);
+
+        // 3. Hapus juga token OTP password reset jika ada
+        $delResetStmt = $pdo->prepare("DELETE FROM `password_resets` WHERE `email` = ?");
+        $delResetStmt->execute([$emailToDelete]);
+    }
+
+    // 4. Hapus user dari tabel users
     $stmt = $pdo->prepare("DELETE FROM `users` WHERE `id` = ?");
     $stmt->execute([$adminUserId]);
-    sendResponse(true, ['message' => 'User berhasil dihapus.']);
+    sendResponse(true, ['message' => 'User beserta seluruh data riwayat scan miliknya berhasil dihapus.']);
 }
 
 // Route: /admin/detections (GET)
