@@ -67,6 +67,7 @@ if (!headers_sent()) header("Content-Type: application/json; charset=UTF-8");
 // 4. Hubungkan ke Database (Auto-Migrate & Auto-Seed)
 require_once __DIR__ . '/connection.php';
 require_once __DIR__ . '/inference_engine.php';
+require_once __DIR__ . '/mailer.php';
 
 // Helper Config Environment Drivers
 $GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY');
@@ -482,35 +483,124 @@ if ($path === '/auth/register' && $method === 'POST') {
     sendResponse(true, ['message' => 'Registrasi berhasil. Silakan login.']);
 }
 
-// Route: /auth/reset-password
-if ($path === '/auth/reset-password' && $method === 'POST') {
-    $email = isset($inputData['email']) ? trim($inputData['email']) : '';
-    $newPassword = isset($inputData['newPassword']) ? $inputData['newPassword'] : (isset($inputData['password']) ? $inputData['password'] : '');
-    
-    if (empty($email) || empty($newPassword)) {
-        sendResponse(false, ['message' => 'Email dan password baru harus diisi.'], 400);
+// ============================================================
+// Route: POST /auth/forgot-password
+// Langkah 1: Terima email, kirim OTP 6-digit via email
+// ============================================================
+if ($path === '/auth/forgot-password' && $method === 'POST') {
+    $email = isset($inputData['email']) ? strtolower(trim($inputData['email'])) : '';
+
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        sendResponse(false, ['message' => 'Format email tidak valid.'], 400);
+    }
+
+    // Cek apakah email terdaftar
+    $stmt = $pdo->prepare("SELECT `id`, `name` FROM `users` WHERE `email` = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        // Jangan bocorkan info email mana yang terdaftar (security best practice)
+        sendResponse(false, ['message' => 'Email tidak terdaftar di sistem PadiGuard.'], 404);
+    }
+
+    // Batasi rate: maks 3 OTP per 10 menit untuk satu email
+    $rateStmt = $pdo->prepare(
+        "SELECT COUNT(*) as cnt FROM `password_resets` WHERE `email` = ? AND `created_at` > DATE_SUB(NOW(), INTERVAL 10 MINUTE)"
+    );
+    $rateStmt->execute([$email]);
+    $rate = $rateStmt->fetch();
+    if ($rate && $rate['cnt'] >= 3) {
+        sendResponse(false, ['message' => 'Terlalu banyak permintaan OTP. Coba lagi dalam 10 menit.'], 429);
+    }
+
+    // Buat OTP 6 digit acak
+    $otp = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+    $expiresAt = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+
+    // Hapus OTP lama untuk email ini, lalu simpan yang baru
+    $pdo->prepare("DELETE FROM `password_resets` WHERE `email` = ?")->execute([$email]);
+    $insStmt = $pdo->prepare("INSERT INTO `password_resets` (`email`, `otp_token`, `expires_at`) VALUES (?, ?, ?)");
+    $insStmt->execute([$email, $otp, $expiresAt]);
+
+    // Kirim email OTP
+    $userName  = $user['name'];
+    $subject   = 'Kode OTP Reset Password PadiGuard';
+    $htmlBody  = buildOtpEmailHtml($userName, $otp, 15);
+    $mailSent  = sendPadiGuardEmail($email, $userName, $subject, $htmlBody);
+
+    if (!$mailSent) {
+        // Rollback: hapus token jika email gagal
+        $pdo->prepare("DELETE FROM `password_resets` WHERE `email` = ?")->execute([$email]);
+        sendResponse(false, ['message' => 'Gagal mengirim email OTP. Periksa koneksi server atau konfigurasi SMTP.'], 500);
+    }
+
+    sendResponse(true, [
+        'message' => 'Kode OTP telah dikirim ke email Anda. Berlaku selama 15 menit.',
+        'email'   => $email
+    ]);
+}
+
+// ============================================================
+// Route: POST /auth/verify-otp-reset
+// Langkah 2: Verifikasi OTP & simpan password baru
+// ============================================================
+if ($path === '/auth/verify-otp-reset' && $method === 'POST') {
+    $email       = isset($inputData['email'])       ? strtolower(trim($inputData['email']))   : '';
+    $otp         = isset($inputData['otp'])         ? trim($inputData['otp'])                  : '';
+    $newPassword = isset($inputData['newPassword']) ? $inputData['newPassword']                : '';
+
+    if (empty($email) || empty($otp) || empty($newPassword)) {
+        sendResponse(false, ['message' => 'Email, kode OTP, dan password baru wajib diisi.'], 400);
     }
 
     if (strlen($newPassword) < 6) {
-        sendResponse(false, ['message' => 'Password minimal harus 6 karakter.'], 400);
+        sendResponse(false, ['message' => 'Password baru minimal 6 karakter.'], 400);
     }
-    
-    $stmt = $pdo->prepare("SELECT * FROM `users` WHERE `email` = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-    
+
+    if (!preg_match('/^\d{6}$/', $otp)) {
+        sendResponse(false, ['message' => 'Format kode OTP tidak valid (harus 6 digit angka).'], 400);
+    }
+
+    // Cek OTP di database (valid dan belum expired)
+    $stmt = $pdo->prepare(
+        "SELECT * FROM `password_resets` WHERE `email` = ? AND `otp_token` = ? AND `expires_at` > NOW()"
+    );
+    $stmt->execute([$email, $otp]);
+    $resetRecord = $stmt->fetch();
+
+    if (!$resetRecord) {
+        sendResponse(false, ['message' => 'Kode OTP tidak valid atau sudah kadaluarsa. Minta kode baru.'], 400);
+    }
+
+    // Cek user masih ada
+    $userStmt = $pdo->prepare("SELECT `id` FROM `users` WHERE `email` = ?");
+    $userStmt->execute([$email]);
+    $user = $userStmt->fetch();
+
     if (!$user) {
-        sendResponse(false, ['message' => 'Email tidak terdaftar di sistem PadiGuard.'], 404);
+        sendResponse(false, ['message' => 'Akun tidak ditemukan.'], 404);
     }
-    
+
+    // Update password dengan hash baru
     $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
     $updateStmt = $pdo->prepare("UPDATE `users` SET `password` = ? WHERE `id` = ?");
     $updateStmt->execute([$hashedPassword, $user['id']]);
-    
+
+    // Hapus token OTP (one-time use)
+    $pdo->prepare("DELETE FROM `password_resets` WHERE `email` = ?")->execute([$email]);
+
     sendResponse(true, [
         'message' => 'Password berhasil diperbarui! Silakan login dengan password baru Anda.',
-        'email' => $email
+        'email'   => $email
     ]);
+}
+
+// Route lama (backward-compat): /auth/reset-password tanpa OTP — DITOLAK untuk keamanan
+if ($path === '/auth/reset-password' && $method === 'POST') {
+    sendResponse(false, [
+        'message' => 'Endpoint ini tidak lagi aktif. Gunakan fitur Lupa Password dengan verifikasi OTP email.'
+    ], 410);
 }
 
 function serveImageFile($filePath) {

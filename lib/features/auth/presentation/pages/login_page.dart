@@ -85,6 +85,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _showForgotPasswordDialog(BuildContext context) {
     final emailController = TextEditingController(text: _emailController.text.trim());
+    final otpController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -92,6 +93,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     bool obscureNew = true;
     bool obscureConfirm = true;
     String? dialogError;
+    // Step 1 = input email, Step 2 = input OTP + password baru
+    int currentStep = 1;
+    String? confirmedEmail;
 
     showDialog(
       context: context,
@@ -100,25 +104,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         builder: (context, setDialogState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          Future<void> handleResetPassword() async {
+          // ── STEP 1: Kirim OTP ──
+          Future<void> handleSendOtp() async {
             if (!formKey.currentState!.validate()) return;
-            
-            setDialogState(() {
-              isSubmitting = true;
-              dialogError = null;
-            });
+            setDialogState(() { isSubmitting = true; dialogError = null; });
 
-            final email = emailController.text.trim();
-            final newPassword = newPasswordController.text;
-
+            final email = emailController.text.trim().toLowerCase();
             try {
               final dioClient = ref.read(dioClientProvider);
               final response = await dioClient.dio.post(
-                'api/auth/reset-password',
-                data: {
-                  'email': email,
-                  'newPassword': newPassword,
-                },
+                'api/auth/forgot-password',
+                data: {'email': email},
               );
 
               dynamic resData = response.data;
@@ -126,33 +122,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 try { resData = jsonDecode(resData); } catch (_) {}
               }
 
-              if ((response.statusCode == 200 || response.statusCode == 201) &&
-                  resData is Map &&
-                  resData['success'] == true) {
-                
-                if (mounted) {
-                  Navigator.of(dialogContext, rootNavigator: true).pop();
-                  setState(() {
-                    _emailController.text = email;
-                    _passwordController.clear();
-                  });
-
-                  ScaffoldMessenger.of(rootNavigatorKey.currentContext ?? context).showSnackBar(
-                    SnackBar(
-                      content: Text(resData['message'] ?? 'Password berhasil diperbarui! Silakan login.'),
-                      backgroundColor: AppTheme.successColor,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 4),
-                    ),
-                  );
-                }
-              } else {
-                final msg = (resData is Map && resData['message'] != null)
-                    ? resData['message'].toString()
-                    : 'Gagal mereset password.';
+              if (response.statusCode == 200 && resData is Map && resData['success'] == true) {
                 setDialogState(() {
                   isSubmitting = false;
-                  dialogError = msg;
+                  currentStep = 2;
+                  confirmedEmail = email;
+                  dialogError = null;
+                });
+              } else {
+                setDialogState(() {
+                  isSubmitting = false;
+                  dialogError = (resData is Map && resData['message'] != null)
+                      ? resData['message'].toString()
+                      : 'Gagal mengirim OTP. Coba lagi.';
                 });
               }
             } catch (e) {
@@ -163,15 +145,75 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   msg = resData['message'].toString();
                 } else if (e.response?.statusCode == 404) {
                   msg = 'Email tidak terdaftar di sistem PadiGuard.';
+                } else if (e.response?.statusCode == 429) {
+                  msg = 'Terlalu banyak permintaan OTP. Coba lagi dalam 10 menit.';
                 }
               }
-              setDialogState(() {
-                isSubmitting = false;
-                dialogError = msg;
-              });
+              setDialogState(() { isSubmitting = false; dialogError = msg; });
             }
           }
 
+          // ── STEP 2: Verifikasi OTP & Reset Password ──
+          Future<void> handleVerifyOtp() async {
+            if (!formKey.currentState!.validate()) return;
+            setDialogState(() { isSubmitting = true; dialogError = null; });
+
+            final email = confirmedEmail ?? emailController.text.trim().toLowerCase();
+            final otp = otpController.text.trim();
+            final newPassword = newPasswordController.text;
+
+            try {
+              final dioClient = ref.read(dioClientProvider);
+              final response = await dioClient.dio.post(
+                'api/auth/verify-otp-reset',
+                data: {'email': email, 'otp': otp, 'newPassword': newPassword},
+              );
+
+              dynamic resData = response.data;
+              if (resData is String) {
+                try { resData = jsonDecode(resData); } catch (_) {}
+              }
+
+              if ((response.statusCode == 200 || response.statusCode == 201) &&
+                  resData is Map && resData['success'] == true) {
+                if (mounted) {
+                  Navigator.of(dialogContext, rootNavigator: true).pop();
+                  setState(() {
+                    _emailController.text = email;
+                    _passwordController.clear();
+                  });
+                  ScaffoldMessenger.of(rootNavigatorKey.currentContext ?? context).showSnackBar(
+                    SnackBar(
+                      content: Text(resData['message'] ?? 'Password berhasil diperbarui!'),
+                      backgroundColor: AppTheme.successColor,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
+              } else {
+                setDialogState(() {
+                  isSubmitting = false;
+                  dialogError = (resData is Map && resData['message'] != null)
+                      ? resData['message'].toString()
+                      : 'Kode OTP salah atau sudah kadaluarsa.';
+                });
+              }
+            } catch (e) {
+              String msg = 'Gagal terhubung ke server.';
+              if (e is DioException) {
+                final resData = e.response?.data;
+                if (resData is Map && resData['message'] != null) {
+                  msg = resData['message'].toString();
+                } else if (e.response?.statusCode == 400) {
+                  msg = 'Kode OTP tidak valid atau sudah kadaluarsa. Minta kode baru.';
+                }
+              }
+              setDialogState(() { isSubmitting = false; dialogError = msg; });
+            }
+          }
+
+          // ── DIALOG UI ──
           return AlertDialog(
             backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -183,15 +225,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     color: const Color(0xFF4CAF50).withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lock_reset, color: Color(0xFF4CAF50), size: 24),
+                  child: Icon(
+                    currentStep == 1 ? Icons.lock_reset : Icons.verified_outlined,
+                    color: const Color(0xFF4CAF50), size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Reset Password',
+                    currentStep == 1 ? 'Lupa Password' : 'Masukkan Kode OTP',
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontWeight: FontWeight.bold, fontSize: 18,
                       color: isDark ? Colors.white : AppTheme.textDark,
                     ),
                   ),
@@ -206,13 +250,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Masukkan email terdaftar Anda dan buat password baru.',
+                      currentStep == 1
+                          ? 'Masukkan email yang terdaftar. Kami akan mengirimkan kode OTP 6 digit ke email Anda.'
+                          : 'Kode OTP telah dikirim ke ${confirmedEmail ?? ""}.\nMasukkan kode dan buat password baru.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: isDark ? Colors.white60 : Colors.black54,
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Error banner
                     if (dialogError != null) ...[
                       Container(
                         padding: const EdgeInsets.all(10),
@@ -221,72 +269,136 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: AppTheme.errorColor.withOpacity(0.3)),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                dialogError!,
-                                style: const TextStyle(color: AppTheme.errorColor, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: Row(children: [
+                          const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(dialogError!, style: const TextStyle(color: AppTheme.errorColor, fontSize: 12))),
+                        ]),
                       ),
                       const SizedBox(height: 14),
                     ],
-                    TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Terdaftar',
-                        prefixIcon: Icon(Icons.email_outlined),
+
+                    // ── STEP 1: Email field ──
+                    if (currentStep == 1) ...[
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Terdaftar',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) return 'Email wajib diisi';
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
+                            return 'Format email tidak valid';
+                          }
+                          return null;
+                        },
                       ),
-                      validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Email wajib diisi';
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
-                          return 'Format email tidak valid';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: newPasswordController,
-                      obscureText: obscureNew,
-                      decoration: InputDecoration(
-                        labelText: 'Password Baru',
-                        prefixIcon: const Icon(Icons.lock_outlined),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                          onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                    ],
+
+                    // ── STEP 2: OTP + Password baru ──
+                    if (currentStep == 2) ...[
+                      TextFormField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 24, fontWeight: FontWeight.bold,
+                          letterSpacing: 8, color: const Color(0xFF22C55E),
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Kode OTP (6 digit)',
+                          prefixIcon: const Icon(Icons.shield_outlined),
+                          counterText: '',
+                          hintText: '000000',
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 24, letterSpacing: 8, color: Colors.grey.withOpacity(0.4),
+                          ),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.trim().length != 6) return 'Masukkan 6 digit kode OTP';
+                          if (!RegExp(r'^\d{6}$').hasMatch(val.trim())) return 'Kode OTP hanya boleh angka';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Info OTP berlaku 15 menit
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBBF24).withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.3)),
+                        ),
+                        child: Row(children: [
+                          const Icon(Icons.timer_outlined, color: Color(0xFFFBBF24), size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(child: Text(
+                            'Kode OTP berlaku 15 menit. Cek folder Spam jika tidak masuk inbox.',
+                            style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFFBBF24)),
+                          )),
+                        ]),
+                      ),
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: newPasswordController,
+                        obscureText: obscureNew,
+                        decoration: InputDecoration(
+                          labelText: 'Password Baru',
+                          prefixIcon: const Icon(Icons.lock_outlined),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                          ),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Password baru wajib diisi';
+                          if (val.length < 6) return 'Password minimal 6 karakter';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: confirmPasswordController,
+                        obscureText: obscureConfirm,
+                        decoration: InputDecoration(
+                          labelText: 'Konfirmasi Password Baru',
+                          prefixIcon: const Icon(Icons.lock_clock_outlined),
+                          suffixIcon: IconButton(
+                            icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                            onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                          ),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Konfirmasi password wajib diisi';
+                          if (val != newPasswordController.text) return 'Konfirmasi password tidak cocok';
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 8),
+                      // Tombol kirim ulang OTP
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: isSubmitting ? null : () {
+                            setDialogState(() {
+                              currentStep = 1;
+                              dialogError = null;
+                              otpController.clear();
+                              newPasswordController.clear();
+                              confirmPasswordController.clear();
+                            });
+                          },
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: Text('Kirim Ulang OTP', style: GoogleFonts.poppins(fontSize: 12)),
                         ),
                       ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Password baru wajib diisi';
-                        if (val.length < 6) return 'Password minimal 6 karakter';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: confirmPasswordController,
-                      obscureText: obscureConfirm,
-                      decoration: InputDecoration(
-                        labelText: 'Konfirmasi Password Baru',
-                        prefixIcon: const Icon(Icons.lock_clock_outlined),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                          onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
-                        ),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Konfirmasi password wajib diisi';
-                        if (val != newPasswordController.text) return 'Password tidak cocok';
-                        return null;
-                      },
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -294,22 +406,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             actions: [
               TextButton(
                 onPressed: isSubmitting ? null : () => Navigator.of(dialogContext, rootNavigator: true).pop(),
-                child: const Text('Batal'),
+                child: Text('Batal', style: GoogleFonts.poppins(color: Colors.grey)),
               ),
-              ElevatedButton(
-                onPressed: isSubmitting ? null : handleResetPassword,
+              ElevatedButton.icon(
+                onPressed: isSubmitting ? null : (currentStep == 1 ? handleSendOtp : handleVerifyOtp),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B5E20),
+                  backgroundColor: const Color(0xFF22C55E),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('Reset Password'),
+                icon: isSubmitting
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Icon(currentStep == 1 ? Icons.send_outlined : Icons.check_circle_outline, size: 18),
+                label: Text(
+                  isSubmitting
+                      ? (currentStep == 1 ? 'Mengirim...' : 'Memverifikasi...')
+                      : (currentStep == 1 ? 'Kirim OTP ke Email' : 'Reset Password'),
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           );
