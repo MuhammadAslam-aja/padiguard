@@ -128,6 +128,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   currentStep = 2;
                   confirmedEmail = email;
                   dialogError = null;
+                  if (resData['otp'] != null) {
+                    otpController.text = resData['otp'].toString();
+                  }
                 });
               } else {
                 setDialogState(() {

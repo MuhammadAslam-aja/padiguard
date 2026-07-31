@@ -6,9 +6,9 @@ function sendPadiGuardEmail($toEmail, $toName, $subject, $htmlBody) {
     // ====== KONFIGURASI SMTP (Baca dari env, fallback ke default) ====== 
     $smtpHost     = getEnvVar('MAIL_HOST',     'smtp.gmail.com');
     $smtpPort     = (int)(getEnvVar('MAIL_PORT', '587'));
-    $smtpUser     = getEnvVar('MAIL_USERNAME', 'enaayyy@gmail.com');
-    $smtpPass     = getEnvVar('MAIL_PASSWORD', 'hnsm vnel muxy doxd');
-    $fromEmail    = getEnvVar('MAIL_FROM',     'enaayyy@gmail.com');
+    $smtpUser     = trim(getEnvVar('MAIL_USERNAME', 'enaayyy@gmail.com'));
+    $smtpPass     = str_replace(' ', '', trim(getEnvVar('MAIL_PASSWORD', 'hnsm vnel muxy doxd')));
+    $fromEmail    = trim(getEnvVar('MAIL_FROM',     'enaayyy@gmail.com'));
     $fromName     = getEnvVar('MAIL_FROM_NAME','PadiGuard');
 
     if (empty($smtpUser) || empty($smtpPass)) {
