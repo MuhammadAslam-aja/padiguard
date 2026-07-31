@@ -199,34 +199,16 @@ try {
         $pdo->exec("ALTER TABLE `dataset` ADD COLUMN `hash` varchar(64) DEFAULT NULL");
     } catch (\PDOException $err) {}
     
-    // Seed default users
+    // Seed default users (Hanya 1 User)
     $defaultUsers = [
         [
             'id' => 'u_1',
-            'name' => 'Budi Santoso',
-            'email' => 'petani@gmail.com',
+            'name' => 'aslam',
+            'email' => 'aslam@gmail.com',
             'password' => password_hash('petani123', PASSWORD_DEFAULT),
             'role' => 'petani',
-            'avatar' => 'https://api.dicebear.com/7.x/adventurer/png?seed=Budi',
+            'avatar' => 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam',
             'createdAt' => '2026-05-10 08:30:00'
-        ],
-        [
-            'id' => 'u_2',
-            'name' => 'Siti Rahma',
-            'email' => 'siti.petani@gmail.com',
-            'password' => password_hash('password123', PASSWORD_DEFAULT),
-            'role' => 'petani',
-            'avatar' => 'https://api.dicebear.com/7.x/adventurer/png?seed=Siti',
-            'createdAt' => '2026-06-12 09:15:00'
-        ],
-        [
-            'id' => 'u_3',
-            'name' => 'Admin PadiGuard',
-            'email' => 'admin@gmail.com',
-            'password' => password_hash('admin123', PASSWORD_DEFAULT),
-            'role' => 'admin',
-            'avatar' => 'https://api.dicebear.com/7.x/bottts/png?seed=Admin',
-            'createdAt' => '2026-04-01 07:00:00'
         ]
     ];
     
@@ -235,12 +217,12 @@ try {
         $stmt->execute($u);
     }
     
-    // Seed default detections
+    // Seed default detections (Hanya 1 Hasil Deteksi)
     $defaultDetections = [
         [
             'id' => 'd_1',
-            'userEmail' => 'petani@gmail.com',
-            'userName' => 'Budi Santoso',
+            'userEmail' => 'aslam@gmail.com',
+            'userName' => 'aslam',
             'date' => '2026-06-25 10:30:00',
             'imageUrl' => 'https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?auto=format&fit=crop&q=80&w=500',
             'hamaName' => 'Wereng Coklat',
@@ -254,41 +236,6 @@ try {
             'dangerLevel' => 'Tinggi',
             'description' => 'Wereng Coklat (Nilaparvata lugens) menghisap cairan tanaman padi menyebabkan daun menguning, mengering (hopperburn), dan tanaman mati.',
             'treatment' => "1. Atur jarak tanam legowo untuk mengurangi kelembapan.\n2. Lestarikan musuh alami seperti laba-laba.\n3. Semprotkan insektisida pymetrozine jika populasi tinggi."
-        ],
-        [
-            'id' => 'd_2',
-            'userEmail' => 'petani@gmail.com',
-            'userName' => 'Budi Santoso',
-            'date' => '2026-06-26 08:15:00',
-            'imageUrl' => 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&q=80&w=500',
-            'hamaName' => null,
-            'hamaConfidence' => 0.0,
-            'kematangan' => 'Matang',
-            'kematanganConfidence' => 0.97,
-            'boundingBoxes' => json_encode([
-                ['label' => 'Matang (97%)', 'xMin' => 0.05, 'yMin' => 0.05, 'xMax' => 0.95, 'yMax' => 0.95, 'isHama' => false],
-            ]),
-            'dangerLevel' => 'Aman',
-            'description' => 'Tanaman padi telah mencapai fase masak penuh (matang fisiologis). Lebih dari 90% butir gabah telah menguning sempurna dan kadar air menurun.',
-            'treatment' => 'Segera lakukan pemanenan dalam waktu 1-2 minggu ke depan untuk menghindari rontoknya gabah.'
-        ],
-        [
-            'id' => 'd_3',
-            'userEmail' => 'siti.petani@gmail.com',
-            'userName' => 'Siti Rahma',
-            'date' => '2026-06-24 14:20:00',
-            'imageUrl' => 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=500',
-            'hamaName' => 'Walang Sangit',
-            'hamaConfidence' => 0.76,
-            'kematangan' => 'Mentah',
-            'kematanganConfidence' => 0.91,
-            'boundingBoxes' => json_encode([
-                ['label' => 'Walang Sangit (76%)', 'xMin' => 0.4, 'yMin' => 0.4, 'xMax' => 0.7, 'yMax' => 0.7, 'isHama' => true],
-                ['label' => 'Mentah (91%)', 'xMin' => 0.1, 'yMin' => 0.1, 'xMax' => 0.9, 'yMax' => 0.9, 'isHama' => false],
-            ]),
-            'dangerLevel' => 'Sedang',
-            'description' => 'Walang Sangit (Leptocorisa oratorius) menyerang bulir padi pada fase masak susu, menyebabkan bulir menjadi hampa atau bercorak coklat kehitaman.',
-            'treatment' => "1. Lakukan sanitasi lingkungan sawah dari rumput liar.\n2. Gunakan umpan bau-bauan untuk menjebak walang sangit.\n3. Semprotkan pestisida kimia pada pagi/sore hari."
         ]
     ];
     
@@ -297,6 +244,33 @@ try {
         $stmtDet->execute($d);
     }
 }
+
+// Steering / Pruning Database Real-time: Sisakan tepat 1 User dan 1 Hasil Deteksi
+try {
+    // 1. Sisakan tepat 1 user (prioritaskan aslam@gmail.com jika ada, atau 1 user terbaru)
+    $allUsers = $pdo->query("SELECT `id`, `email` FROM `users` ORDER BY `createdAt` DESC")->fetchAll();
+    if (count($allUsers) > 1) {
+        $keepUser = $allUsers[0];
+        foreach ($allUsers as $u) {
+            if ($u['email'] === 'aslam@gmail.com') {
+                $keepUser = $u;
+                break;
+            }
+        }
+        $keepId = $keepUser['id'];
+        $keepEmail = $keepUser['email'];
+
+        $pdo->prepare("DELETE FROM `users` WHERE `id` != ?")->execute([$keepId]);
+        $pdo->prepare("UPDATE `detections` SET `userEmail` = ?")->execute([$keepEmail]);
+    }
+
+    // 2. Sisakan tepat 1 hasil deteksi
+    $allDets = $pdo->query("SELECT `id` FROM `detections` ORDER BY `date` DESC")->fetchAll();
+    if (count($allDets) > 1) {
+        $keepDetId = $allDets[0]['id'];
+        $pdo->prepare("DELETE FROM `detections` WHERE `id` != ?")->execute([$keepDetId]);
+    }
+} catch (\Exception $exSteer) {}
 
 // Pastikan nilai performa model diperbarui sesuai hasil training Roboflow terbaru (real-time migration)
 try {
