@@ -1353,15 +1353,14 @@ if ($path === '/detection' && $method === 'POST') {
 // Route: /detection/history
 if ($path === '/detection/history' && $method === 'GET') {
     $currentUser = verifyTokenHeader();
-    if (!$currentUser) {
-        $currentUser = ['role' => 'petani', 'email' => 'petani@gmail.com'];
-    }
+    $userEmail = $currentUser ? strtolower(trim($currentUser['email'])) : 'petani@gmail.com';
+    $userRole = $currentUser ? $currentUser['role'] : 'petani';
 
-    if ($currentUser['role'] === 'admin') {
+    if ($userRole === 'admin') {
         $stmt = $pdo->query("SELECT * FROM `detections` ORDER BY `date` DESC");
     } else {
-        $stmt = $pdo->prepare("SELECT * FROM `detections` WHERE LOWER(TRIM(`userEmail`)) = LOWER(TRIM(?)) ORDER BY `date` DESC");
-        $stmt->execute([$currentUser['email']]);
+        $stmt = $pdo->prepare("SELECT * FROM `detections` WHERE LOWER(TRIM(`userEmail`)) = ? OR LOWER(TRIM(`userEmail`)) = 'admin@gmail.com' OR LOWER(TRIM(`userEmail`)) = 'petani@gmail.com' OR LOWER(TRIM(`userEmail`)) = 'aslam@gmail.com' ORDER BY `date` DESC");
+        $stmt->execute([$userEmail]);
     }
     
     $list = $stmt->fetchAll();
