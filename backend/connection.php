@@ -234,6 +234,11 @@ try {
     }
 } catch (\Exception $exAdmin) {}
 
+// Reset avatar unsplash/padi jika tidak sengaja tersimpan sebagai foto profil
+try {
+    $pdo->exec("UPDATE `users` SET `avatar` = 'https://api.dicebear.com/7.x/adventurer/png?seed=aslam' WHERE `email` = 'aslam@gmail.com' AND (`avatar` LIKE '%unsplash%' OR `avatar` LIKE '%photo%')");
+} catch (\Exception $exAv) {}
+
 // Pastikan 1 Hasil Deteksi default tersisa di database
 try {
     $detCount = (int)$pdo->query("SELECT COUNT(*) FROM `detections`")->fetchColumn();
