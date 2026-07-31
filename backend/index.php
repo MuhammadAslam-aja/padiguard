@@ -429,6 +429,102 @@ if ($path === '/version' && $method === 'GET') {
     ]);
 }
 
+// ============================================================
+// Route: GET /weather/current (PUBLIC - tidak butuh token)
+// Proxy ke Open-Meteo (cuaca) + Nominatim OSM — 100% gratis, tanpa API key
+// ============================================================
+if ($path === '/weather/current' && $method === 'GET') {
+    $lat = isset($_GET['lat']) ? (float)$_GET['lat'] : null;
+    $lon = isset($_GET['lon']) ? (float)$_GET['lon'] : null;
+
+    if ($lat === null || $lon === null) {
+        sendResponse(false, ['message' => 'Parameter lat dan lon diperlukan.'], 400);
+    }
+
+    // 1. Fetch cuaca dari Open-Meteo API (100% Gratis, Tanpa API Key)
+    $weatherUrl = "https://api.open-meteo.com/v1/forecast"
+        . "?latitude=$lat&longitude=$lon"
+        . "&current=temperature_2m,relative_humidity_2m,weather_code"
+        . "&timezone=Asia%2FJakarta&forecast_days=1";
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $weatherUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'PadiGuard/1.0');
+    $weatherRaw = curl_exec($ch);
+    $weatherHttp = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($weatherHttp !== 200 || !$weatherRaw) {
+        sendResponse(false, ['message' => 'Gagal mengambil data cuaca dari Open-Meteo.'], 503);
+    }
+
+    $weatherData = json_decode($weatherRaw, true);
+    $current = $weatherData['current'] ?? [];
+    $temp     = isset($current['temperature_2m'])       ? (float)$current['temperature_2m']     : 0.0;
+    $humidity = isset($current['relative_humidity_2m']) ? (int)$current['relative_humidity_2m'] : 0;
+    $wmCode   = isset($current['weather_code'])         ? (int)$current['weather_code']         : 0;
+
+    $descMap = [
+        0 => 'Cerah', 1 => 'Sebagian berawan', 2 => 'Sebagian berawan', 3 => 'Berawan',
+        45 => 'Berkabut', 48 => 'Berkabut', 51 => 'Gerimis', 53 => 'Gerimis', 55 => 'Gerimis',
+        61 => 'Hujan', 63 => 'Hujan', 65 => 'Hujan lebat', 80 => 'Hujan deras', 81 => 'Hujan deras',
+        82 => 'Hujan sangat deras', 95 => 'Badai petir', 96 => 'Badai petir', 99 => 'Badai petir'
+    ];
+    $iconMap = [
+        0 => '01d', 1 => '02d', 2 => '02d', 3 => '03d',
+        45 => '50d', 48 => '50d', 51 => '09d', 53 => '09d', 55 => '09d',
+        61 => '10d', 63 => '10d', 65 => '10d', 80 => '10d', 81 => '10d',
+        82 => '10d', 95 => '11d', 96 => '11d', 99 => '11d'
+    ];
+
+    $desc = isset($descMap[$wmCode]) ? $descMap[$wmCode] : 'Berawan';
+    $icon = isset($iconMap[$wmCode]) ? $iconMap[$wmCode] : '03d';
+
+    // 2. Reverse geocoding dari Nominatim OSM
+    $geoUrl = "https://nominatim.openstreetmap.org/reverse"
+        . "?lat=$lat&lon=$lon&format=json&accept-language=id";
+
+    $ch2 = curl_init();
+    curl_setopt($ch2, CURLOPT_URL, $geoUrl);
+    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch2, CURLOPT_TIMEOUT, 8);
+    curl_setopt($ch2, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch2, CURLOPT_USERAGENT, 'PadiGuard/1.0 (contact@padiguard.id)');
+    $geoRaw  = curl_exec($ch2);
+    $geoHttp = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+    curl_close($ch2);
+
+    $cityName   = '';
+    $regionName = 'Lokasi Anda';
+
+    if ($geoHttp === 200 && $geoRaw) {
+        $geoData = json_decode($geoRaw, true);
+        $address = $geoData['address'] ?? [];
+        $city    = $address['city']  ?? $address['town'] ?? $address['village'] ?? $address['county'] ?? '';
+        $state   = $address['state'] ?? $address['region'] ?? '';
+        $cityName = $city;
+        if ($city && $state)       { $regionName = "$city, $state"; }
+        elseif ($city)             { $regionName = $city; }
+        elseif ($state)            { $regionName = $state; }
+    }
+
+    sendResponse(true, [
+        'weather' => [
+            'city_name'   => $cityName,
+            'region_name' => $regionName,
+            'temperature' => $temp,
+            'humidity'    => $humidity,
+            'description' => $desc,
+            'icon'        => $icon,
+            'lat'         => $lat,
+            'lon'         => $lon,
+        ]
+    ]);
+}
+
 // Route: /auth/login
 if ($path === '/auth/login' && $method === 'POST') {
     $email = isset($inputData['email']) ? trim($inputData['email']) : '';

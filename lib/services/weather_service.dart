@@ -65,9 +65,11 @@ class WeatherService {
   /// Endpoint: GET /weather/current?lat=...&lon=...
   static Future<WeatherData?> fetchWeatherByCoords(double lat, double lon) async {
     try {
-      final url = Uri.parse(
-        '${AppConstants.baseUrl}api/weather/current?lat=$lat&lon=$lon',
-      );
+      final base = AppConstants.baseUrl;
+      final endpoint = (base.endsWith('/api/') || base.endsWith('/api'))
+          ? '${base.endsWith('/') ? base : '$base/'}weather/current?lat=$lat&lon=$lon'
+          : '${base.endsWith('/') ? base : '$base/'}api/weather/current?lat=$lat&lon=$lon';
+      final url = Uri.parse(endpoint);
 
       final response = await http.get(url).timeout(const Duration(seconds: 15));
 
