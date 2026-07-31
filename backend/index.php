@@ -1360,7 +1360,7 @@ if ($path === '/detection/history' && $method === 'GET') {
     if ($currentUser['role'] === 'admin') {
         $stmt = $pdo->query("SELECT * FROM `detections` ORDER BY `date` DESC");
     } else {
-        $stmt = $pdo->prepare("SELECT * FROM `detections` WHERE `userEmail` = ? ORDER BY `date` DESC");
+        $stmt = $pdo->prepare("SELECT * FROM `detections` WHERE LOWER(TRIM(`userEmail`)) = LOWER(TRIM(?)) ORDER BY `date` DESC");
         $stmt->execute([$currentUser['email']]);
     }
     
