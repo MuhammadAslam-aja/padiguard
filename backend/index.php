@@ -961,9 +961,8 @@ if ($path === '/detection' && $method === 'POST') {
     if ($geminiValidation !== null && isset($geminiValidation['is_rice_plant'])) {
         if ($geminiValidation['is_rice_plant'] === false) {
             @unlink($targetPath);
-            $reason = !empty($geminiValidation['reason']) ? $geminiValidation['reason'] : 'bukan tanaman padi';
             sendResponse(false, [
-                'message' => "Gambar ditolak oleh AI Validator ($reason). Harap unggah foto tanaman padi yang valid (sawah/batang/daun/malai padi)."
+                'message' => "Gambar terdeteksi sebagai gambar non-padi. Harap ambil foto tanaman padi yang valid (sawah, daun, atau batang padi)."
             ], 400);
         }
         

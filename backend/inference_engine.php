@@ -328,55 +328,53 @@ if (!function_exists('isRicePlantImage')) {
         // =======================================================================
 
         // [A] Tembok / Lantai Polos / Plafon
-        // Contoh: foto tembok krem/putih, lantai, meja
         if ($wallRatio > 0.55 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai tembok, lantai, atau permukaan polos — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
 
         // [B] Wajah / Tubuh Manusia
-        // Deteksi skin ratio tinggi HANYA jika bukan tembok
         if ($skinRatio >= 0.08 && $riceRatio < 0.10 && $wallRatio < 0.30) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai wajah atau tubuh manusia — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
 
-        // [C] Makanan (kentang goreng, saos, bungkus produk)
+        // [C] Makanan
         if ($foodRatio > 0.12 && $riceRatio < 0.10) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai makanan atau kemasan produk — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
         
-        // [D] Bungkus / Packaging dengan warna sangat cerah (saos, minuman)
+        // [D] Kemasan Produk / Objek Buatan
         if ($brightArtRatio > 0.05 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai kemasan produk atau objek buatan — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
 
-        // [E] Parkiran / Area Outdoor Non-Padi (aspal + abu-abu dominan)
+        // [E] Parkiran / Outdoor Non-Padi
         if (($asphaltRatio + $grayRatio) > 0.50 && $riceRatio < 0.06) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai area parkiran, jalan, atau bangunan — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
 
-        // [F] Ruangan Indoor Gelap (café, parkiran malam, gedung)
+        // [F] Ruangan Indoor / Area Gelap
         if ($indoorDarkRatio > 0.25 && ($grayRatio + $asphaltRatio) > 0.30 && $riceRatio < 0.05) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai ruangan indoor atau area gelap — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
 
-        // [G] Foto Indoor Umum (riceRatio terlalu rendah + dominasi gray/dark)
+        // [G] Non-Padi Umum
         if ($riceRatio < 0.03 || ($indoorDarkRatio + $grayRatio > 0.45 && $riceRatio < 0.05)) {
-            return ['valid' => false, 'reason' => 'Gambar tidak menunjukkan ciri tanaman padi — harap unggah foto sawah, daun, atau batang padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
         
-        // [H] Pakaian / Baju Buatan
+        // [H] Pakaian / Baju
         if ($clothingRatio > 0.15 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi mengandung objek buatan (pakaian) — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
         
-        // [I] Dokumen / Latar Polos Solid
+        // [I] Dokumen / Screenshot
         if ($docRatio > 0.75) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai dokumen, screenshot, atau latar polos — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
         
-        // [J] Langit / Objek Biru Dominan
+        // [J] Langit / Objek Biru
         if (($blueRatio + $grayRatio) > 0.80 && $riceRatio < 0.03) {
-            return ['valid' => false, 'reason' => 'Gambar didominasi langit atau objek buatan — bukan tanaman padi.'];
+            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
         }
         
         return ['valid' => true, 'reason' => ''];
