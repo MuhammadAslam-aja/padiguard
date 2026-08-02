@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const String appName = 'PadiGuard';
@@ -87,20 +87,10 @@ class AppConstants {
       'description': 'Wereng Coklat (Nilaparvata lugens) menghisap cairan tanaman padi menyebabkan daun menguning, mengering (hopperburn), dan tanaman mati.',
       'treatment': '1. Atur jarak tanam legowo untuk mengurangi kelembapan.\n2. Lestarikan musuh alami seperti laba-laba dan kumbang coccinellid.\n3. Jika populasi di atas ambang batas (15 ekor/rumpun), gunakan insektisida berbahan aktif pymetrozine atau imidacloprid sesuai dosis.',
     },
-    'Walang Sangit': {
-      'danger_level': 'Sedang',
-      'description': 'Walang Sangit (Leptocorisa oratorius) menyerang bulir padi pada fase masak susu, menyebabkan bulir menjadi hampa atau bercorak coklat kehitaman.',
-      'treatment': '1. Lakukan sanitasi lingkungan sawah dari rumput liar.\n2. Gunakan umpan bau-bauan (misal ikan busuk/kepiting) untuk menjebak walang sangit dewasa.\n3. Semprotkan pestisida nabati berbahan ekstrak serai wangi atau pestisida kimia berbahan aktif fipronil pada pagi/sore hari.',
-    },
     'Penggerek Batang': {
       'danger_level': 'Tinggi',
       'description': 'Ulat penggerek batang padi (Scirpophaga innotata) merusak titik tumbuh tanaman. Serangan pada fase vegetatif menyebabkan "sundep" (batang layu/mati), dan pada fase generatif menyebabkan "beluk" (malai padi hampa dan putih).',
       'treatment': '1. Kumpulkan kelompok telur penggerek batang secara manual di persemaian.\n2. Tanam serentak untuk memutus siklus hidup hama.\n3. Gunakan agens hayati seperti parasitoid Trichogramma spp. atau insektisida sistemik berbahan aktif karbofuran jika serangan meluas.',
-    },
-    'Ulat Grayak': {
-      'danger_level': 'Sedang',
-      'description': 'Ulat Grayak (Spodoptera litura) memakan helai daun padi hingga hanya menyisakan tulang daun, biasanya menyerang dalam kelompok besar pada malam hari.',
-      'treatment': '1. Genangi sawah sementara waktu untuk memaksa ulat naik ke atas tanaman agar mudah dimakan pemangsa alami.\n2. Gunakan patogen serangga Bacillus thuringiensis (Bt) sebagai pengendali hayati.\n3. Gunakan insektisida kimia berbahan aktif klorantraniliprol jika populasi melebihi ambang batas ekonomi.',
     },
   };
 

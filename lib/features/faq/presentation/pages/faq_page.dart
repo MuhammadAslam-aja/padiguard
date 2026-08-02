@@ -28,7 +28,6 @@ const List<FaqItem> _allFaqItems = [
     answer:
         'Buka menu "Scan Padi" dari navigation bar bawah, lalu tekan tombol Kamera.\n\n'
         'Tips agar hasil deteksi akurat:\n'
-        '• Foto dari jarak 20–40 cm dari tanaman padi.\n'
         '• Pastikan pencahayaan cukup (sebaiknya di luar ruangan).\n'
         '• Fokuskan kamera pada bagian bulir padi atau area yang diduga terserang hama.\n'
         '• Hindari foto yang buram atau goyang.\n'
@@ -66,7 +65,7 @@ const List<FaqItem> _allFaqItems = [
     question: 'Apa arti hasil deteksi hama?',
     answer:
         'Setelah analisis selesai, aplikasi akan menampilkan:\n\n'
-        '🔴 Nama Hama: Jenis hama yang terdeteksi (misal: Wereng Coklat, Walang Sangit, Penggerek Batang).\n\n'
+        '🔴 Nama Hama: Jenis hama yang terdeteksi (Wereng Coklat atau Penggerek Batang).\n\n'
         '📊 Akurasi/Confidence: Tingkat keyakinan model (misal: 88%) – semakin tinggi semakin akurat.\n\n'
         '⚠️ Tingkat Ancaman:\n'
         '• Aman – Tidak ada hama terdeteksi\n'

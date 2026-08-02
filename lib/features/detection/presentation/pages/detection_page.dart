@@ -670,7 +670,6 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
     final tips = [
       {'icon': Icons.wb_sunny_outlined, 'label': 'Pencahayaan cukup'},
       {'icon': Icons.center_focus_strong_outlined, 'label': 'Foto jelas'},
-      {'icon': Icons.straighten_outlined, 'label': 'Jarak 20–40 cm'},
     ];
     return Row(
       children: tips.map((tip) {
