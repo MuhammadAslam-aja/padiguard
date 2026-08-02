@@ -52,6 +52,15 @@
   <canvas id="particle-canvas"></canvas>
   
   <script>
+    // Unregister any old service worker to ensure fresh app load
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+
     // Modern JS Canvas Particle Network Animation
     (function() {
       const canvas = document.getElementById('particle-canvas');
