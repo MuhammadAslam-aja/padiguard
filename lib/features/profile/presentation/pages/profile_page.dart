@@ -11,6 +11,7 @@ import '../../../../core/utils/app_notification.dart';
 import '../../../../core/utils/web_camera_stub.dart'
     if (dart.library.html) '../../../../core/utils/web_camera_web.dart';
 import '../../../auth/presentation/auth_provider.dart';
+import '../../../faq/presentation/pages/faq_page.dart';
 
 class ProfilePage extends ConsumerWidget {
   final bool isAdmin;
@@ -457,10 +458,12 @@ class ProfilePage extends ConsumerWidget {
                   // Action: FAQ / Bantuan
                   ListTile(
                     leading: const Icon(Icons.help_outline),
-                    title: const Text('Bantuan', style: TextStyle(fontSize: 13)),
-                    subtitle: const Text('Petunjuk', style: TextStyle(fontSize: 11)),
+                    title: const Text('Bantuan & FAQ', style: TextStyle(fontSize: 13)),
+                    subtitle: const Text('Panduan penggunaan aplikasi', style: TextStyle(fontSize: 11)),
                     trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () => _showFAQDialog(context),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FaqPage()),
+                    ),
                   ),
                   const Divider(height: 1),
                   
