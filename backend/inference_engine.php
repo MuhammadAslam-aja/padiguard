@@ -506,20 +506,21 @@ if (!function_exists('isGrassOrWeedImage')) {
     }
 }
 
-if (!function_exists('detectDamagedArea')) {
+if (!function_exists('detectDamagedAreas')) {
     /**
-     * Deteksi area terdampak hama pada gambar sawah berdasarkan analisis piksel.
-     * Mencari area berwarna putih/kuning pucat (hopperburn), coklat (daun mati),
-     * dan kuning kering (gabah hampa), lalu menghitung bounding box minimal
-     * yang hanya melingkupi area terdampak tersebut.
+     * Deteksi MULTI-AREA terdampak hama pada gambar sawah berdasarkan analisis piksel.
+     * Menggunakan spatial clustering (grid-based flood-fill) untuk mengelompokkan
+     * piksel terdampak menjadi klaster-klaster terpisah.
+     * Setiap klaster menghasilkan satu bounding box tersendiri.
      *
      * @param string $imagePath Path ke file gambar
-     * @return array|null ['xMin'=>float, 'yMin'=>float, 'xMax'=>float, 'yMax'=>float] normalized 0-1, atau null jika gagal
+     * @return array Array of bounding boxes: [['xMin'=>float, 'yMin'=>float, 'xMax'=>float, 'yMax'=>float], ...]
+     *               Kosong jika tidak ada area terdampak yang cukup signifikan.
      */
-    function detectDamagedArea($imagePath) {
-        if (!file_exists($imagePath)) return null;
+    function detectDamagedAreas($imagePath) {
+        if (!file_exists($imagePath)) return [];
         $info = @getimagesize($imagePath);
-        if (!$info) return null;
+        if (!$info) return [];
 
         $mime = $info['mime'];
         if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
@@ -529,25 +530,36 @@ if (!function_exists('detectDamagedArea')) {
         } elseif ($mime == 'image/webp') {
             $img = @imagecreatefromwebp($imagePath);
         } else {
-            return null;
+            return [];
         }
-        if (!$img) return null;
+        if (!$img) return [];
 
         $w = imagesx($img);
         $h = imagesy($img);
 
-        // Grid sampling: 50x50 titik sampel untuk akurasi yang baik tanpa lambat
-        $gridX = 50;
-        $gridY = 50;
+        // Grid sampling: 60x60 untuk resolusi klaster yang lebih baik
+        $gridX = 60;
+        $gridY = 60;
         $stepX = max(1, (int)($w / $gridX));
         $stepY = max(1, (int)($h / $gridY));
 
-        $damagedPixels = []; // Simpan koordinat piksel yang terdampak
+        // Buat grid 2D untuk menandai sel terdampak
+        $grid = [];
         $totalSamples = 0;
+        $totalDamaged = 0;
 
-        for ($px = 0; $px < $w; $px += $stepX) {
-            for ($py = 0; $py < $h; $py += $stepY) {
+        for ($gx = 0; $gx < $gridX; $gx++) {
+            for ($gy = 0; $gy < $gridY; $gy++) {
+                $grid[$gx][$gy] = false;
+            }
+        }
+
+        for ($gx = 0; $gx < $gridX; $gx++) {
+            $px = min($w - 1, $gx * $stepX);
+            for ($gy = 0; $gy < $gridY; $gy++) {
+                $py = min($h - 1, $gy * $stepY);
                 $totalSamples++;
+
                 $rgb = @imagecolorat($img, (int)$px, (int)$py);
                 if ($rgb === false) continue;
                 $r = ($rgb >> 16) & 0xFF;
@@ -561,77 +573,149 @@ if (!function_exists('detectDamagedArea')) {
                 if ($r > 180 && $g > 170 && $b > 140 && $saturation < 70 && ($r - $b) > 15) {
                     $isDamaged = true;
                 }
-
                 // 2. Coklat Muda (daun menguning ke coklat)
                 if (!$isDamaged && $r > 140 && $g > 90 && $g < 140 && $b < 90 && $r > $g && $g > $b) {
                     $isDamaged = true;
                 }
-
                 // 3. Coklat Tua (daun mati, batang layu)
                 if (!$isDamaged && $r > 80 && $r < 170 && $g > 45 && $g < 120 && $b < 65 && $r > $g && $g > $b) {
                     $isDamaged = true;
                 }
-
                 // 4. Kuning Kering (gabah hampa, daun kering)
                 if (!$isDamaged && $r > 160 && $g > 130 && $b < 100 && ($r - $b) > 60 && abs($r - $g) < 50) {
                     $isDamaged = true;
                 }
-
-                // Exclude piksel hijau sehat (tanaman padi sehat)
+                // Exclude piksel hijau sehat
                 if ($isDamaged && $g > $r && $g > $b && ($g - $r) > 15) {
-                    $isDamaged = false; // Ini hijau, bukan area terdampak
+                    $isDamaged = false;
                 }
 
                 if ($isDamaged) {
-                    $damagedPixels[] = ['x' => $px, 'y' => $py];
+                    $grid[$gx][$gy] = true;
+                    $totalDamaged++;
                 }
             }
         }
         @imagedestroy($img);
 
-        // Harus ada minimal 5% piksel terdampak untuk dianggap valid
-        $damagedCount = count($damagedPixels);
-        if ($damagedCount < ($totalSamples * 0.05)) {
-            return null; // Area terdampak terlalu kecil, gunakan fallback
+        // Harus ada minimal 3% piksel terdampak untuk dianggap valid
+        if ($totalDamaged < ($totalSamples * 0.03)) {
+            return [];
         }
 
-        // Hitung bounding box minimal dari piksel terdampak
-        $minX = $w;
-        $minY = $h;
-        $maxX = 0;
-        $maxY = 0;
-        foreach ($damagedPixels as $dp) {
-            if ($dp['x'] < $minX) $minX = $dp['x'];
-            if ($dp['y'] < $minY) $minY = $dp['y'];
-            if ($dp['x'] > $maxX) $maxX = $dp['x'];
-            if ($dp['y'] > $maxY) $maxY = $dp['y'];
+        // =====================================================================
+        // FLOOD-FILL CLUSTERING: Kelompokkan sel grid yang saling berdekatan
+        // Setiap klaster = satu area serangan hama terpisah
+        // =====================================================================
+        $visited = [];
+        for ($gx = 0; $gx < $gridX; $gx++) {
+            for ($gy = 0; $gy < $gridY; $gy++) {
+                $visited[$gx][$gy] = false;
+            }
         }
 
-        // Normalize ke 0.0 - 1.0
-        $nxMin = max(0.0, ($minX / $w) - 0.03); // Padding 3% agar tidak terlalu rapat
-        $nyMin = max(0.0, ($minY / $h) - 0.03);
-        $nxMax = min(1.0, ($maxX / $w) + 0.03);
-        $nyMax = min(1.0, ($maxY / $h) + 0.03);
+        $clusters = [];
 
-        // Pastikan bounding box tidak terlalu kecil (min 15% lebar/tinggi)
-        $bboxW = $nxMax - $nxMin;
-        $bboxH = $nyMax - $nyMin;
-        if ($bboxW < 0.15) {
-            $centerX = ($nxMin + $nxMax) / 2;
-            $nxMin = max(0.0, $centerX - 0.075);
-            $nxMax = min(1.0, $centerX + 0.075);
-        }
-        if ($bboxH < 0.15) {
-            $centerY = ($nyMin + $nyMax) / 2;
-            $nyMin = max(0.0, $centerY - 0.075);
-            $nyMax = min(1.0, $centerY + 0.075);
+        for ($gx = 0; $gx < $gridX; $gx++) {
+            for ($gy = 0; $gy < $gridY; $gy++) {
+                if ($grid[$gx][$gy] && !$visited[$gx][$gy]) {
+                    // BFS flood-fill untuk menemukan semua sel terhubung
+                    $cluster = [];
+                    $queue = [[$gx, $gy]];
+                    $visited[$gx][$gy] = true;
+
+                    while (!empty($queue)) {
+                        list($cx, $cy) = array_shift($queue);
+                        $cluster[] = ['gx' => $cx, 'gy' => $cy];
+
+                        // Cek 8 tetangga (termasuk diagonal) dengan jangkauan 2 sel
+                        // untuk menghubungkan area yang dekat tapi tidak persis bersebelahan
+                        for ($dx = -2; $dx <= 2; $dx++) {
+                            for ($dy = -2; $dy <= 2; $dy++) {
+                                if ($dx === 0 && $dy === 0) continue;
+                                $nx = $cx + $dx;
+                                $ny = $cy + $dy;
+                                if ($nx >= 0 && $nx < $gridX && $ny >= 0 && $ny < $gridY
+                                    && $grid[$nx][$ny] && !$visited[$nx][$ny]) {
+                                    $visited[$nx][$ny] = true;
+                                    $queue[] = [$nx, $ny];
+                                }
+                            }
+                        }
+                    }
+
+                    // Klaster harus minimal 3 sel agar signifikan
+                    if (count($cluster) >= 3) {
+                        $clusters[] = $cluster;
+                    }
+                }
+            }
         }
 
-        return [
-            'xMin' => round($nxMin, 4),
-            'yMin' => round($nyMin, 4),
-            'xMax' => round($nxMax, 4),
-            'yMax' => round($nyMax, 4)
-        ];
+        if (empty($clusters)) {
+            return [];
+        }
+
+        // =====================================================================
+        // Konversi setiap klaster menjadi bounding box (normalized 0-1)
+        // =====================================================================
+        $result = [];
+        foreach ($clusters as $cluster) {
+            $cMinX = $gridX;
+            $cMinY = $gridY;
+            $cMaxX = 0;
+            $cMaxY = 0;
+
+            foreach ($cluster as $cell) {
+                if ($cell['gx'] < $cMinX) $cMinX = $cell['gx'];
+                if ($cell['gy'] < $cMinY) $cMinY = $cell['gy'];
+                if ($cell['gx'] > $cMaxX) $cMaxX = $cell['gx'];
+                if ($cell['gy'] > $cMaxY) $cMaxY = $cell['gy'];
+            }
+
+            // Konversi grid coord ke normalized image coord
+            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.02);
+            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.02);
+            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.02);
+            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.02);
+
+            // Pastikan bbox tidak terlalu kecil (min 10% lebar/tinggi)
+            $bboxW = $nxMax - $nxMin;
+            $bboxH = $nyMax - $nyMin;
+            if ($bboxW < 0.10) {
+                $cx = ($nxMin + $nxMax) / 2;
+                $nxMin = max(0.0, $cx - 0.05);
+                $nxMax = min(1.0, $cx + 0.05);
+            }
+            if ($bboxH < 0.10) {
+                $cy = ($nyMin + $nyMax) / 2;
+                $nyMin = max(0.0, $cy - 0.05);
+                $nyMax = min(1.0, $cy + 0.05);
+            }
+
+            $result[] = [
+                'xMin' => round($nxMin, 4),
+                'yMin' => round($nyMin, 4),
+                'xMax' => round($nxMax, 4),
+                'yMax' => round($nyMax, 4),
+                'cellCount' => count($cluster)
+            ];
+        }
+
+        // Urutkan berdasarkan ukuran klaster (terbesar dulu)
+        usort($result, function ($a, $b) {
+            return $b['cellCount'] - $a['cellCount'];
+        });
+
+        // Maksimal 6 bounding box untuk menghindari clutter visual
+        return array_slice($result, 0, 6);
+    }
+}
+
+// Backward compatibility wrapper — return single largest area
+if (!function_exists('detectDamagedArea')) {
+    function detectDamagedArea($imagePath) {
+        $areas = detectDamagedAreas($imagePath);
+        return !empty($areas) ? $areas[0] : null;
     }
 }
