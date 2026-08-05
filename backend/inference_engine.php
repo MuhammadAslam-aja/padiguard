@@ -715,11 +715,12 @@ if (!function_exists('detectDamagedArea')) {
 if (!function_exists('cleanNmsBoxes')) {
     /**
      * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box Hama:
-     * - Memfokuskan deteksi pada area utama kerusakan di tengah sawah
-     * - Menghilangkan noise deteksi palsu di daun hijau bawah
-     * - Menggabungkan area yang tumpang tindih menjadi 1 box presisi
+     * - Mendukung Multi-Object Bounding Box untuk Hama Penggerek Batang (beluk/sundep) & Wereng Coklat
+     * - Menghasilkan bounding box terpisah pada setiap lokasi malai/batang yang rusak jika terdapat beberapa spot serangan
+     * - Memfokuskan deteksi pada area sawah (yMin >= 0.20)
+     * - Maksimal 3 bounding box per gambar
      */
-    function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.03, $maxBoxes = 2) {
+    function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.015, $maxBoxes = 3) {
         if (empty($boxes)) return [];
 
         $filtered = [];
@@ -767,8 +768,9 @@ if (!function_exists('cleanNmsBoxes')) {
                 $iou = ($unionArea > 0) ? ($interArea / $unionArea) : 0.0;
                 $overlapMin = ($interArea > 0) ? ($interArea / min($box['area'], $m['area'])) : 0.0;
 
-                // Gabungkan atau tekan jika berhimpitan / tumpang tindih
-                if ($iou >= $iouThreshold || $overlapMin >= 0.40) {
+                // Gabungkan HANYA jika dua box tumpang tindih secara signifikan (IoU >= 0.35 atau overlap >= 50%)
+                // Jika dua area malai/batang terpisah (misal di kiri dan kanan), tetap biarkan sebagai 2 box terpisah
+                if ($iou >= $iouThreshold || $overlapMin >= 0.50) {
                     $m['xMin'] = min($m['xMin'], $box['xMin']);
                     $m['yMin'] = min($m['yMin'], $box['yMin']);
                     $m['xMax'] = max($m['xMax'], $box['xMax']);
