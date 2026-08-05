@@ -505,3 +505,133 @@ if (!function_exists('isGrassOrWeedImage')) {
         return ($greenRatio > 0.40 && $brownRatio < 0.15);
     }
 }
+
+if (!function_exists('detectDamagedArea')) {
+    /**
+     * Deteksi area terdampak hama pada gambar sawah berdasarkan analisis piksel.
+     * Mencari area berwarna putih/kuning pucat (hopperburn), coklat (daun mati),
+     * dan kuning kering (gabah hampa), lalu menghitung bounding box minimal
+     * yang hanya melingkupi area terdampak tersebut.
+     *
+     * @param string $imagePath Path ke file gambar
+     * @return array|null ['xMin'=>float, 'yMin'=>float, 'xMax'=>float, 'yMax'=>float] normalized 0-1, atau null jika gagal
+     */
+    function detectDamagedArea($imagePath) {
+        if (!file_exists($imagePath)) return null;
+        $info = @getimagesize($imagePath);
+        if (!$info) return null;
+
+        $mime = $info['mime'];
+        if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
+            $img = @imagecreatefromjpeg($imagePath);
+        } elseif ($mime == 'image/png') {
+            $img = @imagecreatefrompng($imagePath);
+        } elseif ($mime == 'image/webp') {
+            $img = @imagecreatefromwebp($imagePath);
+        } else {
+            return null;
+        }
+        if (!$img) return null;
+
+        $w = imagesx($img);
+        $h = imagesy($img);
+
+        // Grid sampling: 50x50 titik sampel untuk akurasi yang baik tanpa lambat
+        $gridX = 50;
+        $gridY = 50;
+        $stepX = max(1, (int)($w / $gridX));
+        $stepY = max(1, (int)($h / $gridY));
+
+        $damagedPixels = []; // Simpan koordinat piksel yang terdampak
+        $totalSamples = 0;
+
+        for ($px = 0; $px < $w; $px += $stepX) {
+            for ($py = 0; $py < $h; $py += $stepY) {
+                $totalSamples++;
+                $rgb = @imagecolorat($img, (int)$px, (int)$py);
+                if ($rgb === false) continue;
+                $r = ($rgb >> 16) & 0xFF;
+                $g = ($rgb >> 8) & 0xFF;
+                $b = $rgb & 0xFF;
+
+                $saturation = max($r, $g, $b) - min($r, $g, $b);
+                $isDamaged = false;
+
+                // 1. Putih / Kuning Pucat (hopperburn — daun menguning/memutih)
+                if ($r > 180 && $g > 170 && $b > 140 && $saturation < 70 && ($r - $b) > 15) {
+                    $isDamaged = true;
+                }
+
+                // 2. Coklat Muda (daun menguning ke coklat)
+                if (!$isDamaged && $r > 140 && $g > 90 && $g < 140 && $b < 90 && $r > $g && $g > $b) {
+                    $isDamaged = true;
+                }
+
+                // 3. Coklat Tua (daun mati, batang layu)
+                if (!$isDamaged && $r > 80 && $r < 170 && $g > 45 && $g < 120 && $b < 65 && $r > $g && $g > $b) {
+                    $isDamaged = true;
+                }
+
+                // 4. Kuning Kering (gabah hampa, daun kering)
+                if (!$isDamaged && $r > 160 && $g > 130 && $b < 100 && ($r - $b) > 60 && abs($r - $g) < 50) {
+                    $isDamaged = true;
+                }
+
+                // Exclude piksel hijau sehat (tanaman padi sehat)
+                if ($isDamaged && $g > $r && $g > $b && ($g - $r) > 15) {
+                    $isDamaged = false; // Ini hijau, bukan area terdampak
+                }
+
+                if ($isDamaged) {
+                    $damagedPixels[] = ['x' => $px, 'y' => $py];
+                }
+            }
+        }
+        @imagedestroy($img);
+
+        // Harus ada minimal 5% piksel terdampak untuk dianggap valid
+        $damagedCount = count($damagedPixels);
+        if ($damagedCount < ($totalSamples * 0.05)) {
+            return null; // Area terdampak terlalu kecil, gunakan fallback
+        }
+
+        // Hitung bounding box minimal dari piksel terdampak
+        $minX = $w;
+        $minY = $h;
+        $maxX = 0;
+        $maxY = 0;
+        foreach ($damagedPixels as $dp) {
+            if ($dp['x'] < $minX) $minX = $dp['x'];
+            if ($dp['y'] < $minY) $minY = $dp['y'];
+            if ($dp['x'] > $maxX) $maxX = $dp['x'];
+            if ($dp['y'] > $maxY) $maxY = $dp['y'];
+        }
+
+        // Normalize ke 0.0 - 1.0
+        $nxMin = max(0.0, ($minX / $w) - 0.03); // Padding 3% agar tidak terlalu rapat
+        $nyMin = max(0.0, ($minY / $h) - 0.03);
+        $nxMax = min(1.0, ($maxX / $w) + 0.03);
+        $nyMax = min(1.0, ($maxY / $h) + 0.03);
+
+        // Pastikan bounding box tidak terlalu kecil (min 15% lebar/tinggi)
+        $bboxW = $nxMax - $nxMin;
+        $bboxH = $nyMax - $nyMin;
+        if ($bboxW < 0.15) {
+            $centerX = ($nxMin + $nxMax) / 2;
+            $nxMin = max(0.0, $centerX - 0.075);
+            $nxMax = min(1.0, $centerX + 0.075);
+        }
+        if ($bboxH < 0.15) {
+            $centerY = ($nyMin + $nyMax) / 2;
+            $nyMin = max(0.0, $centerY - 0.075);
+            $nyMax = min(1.0, $centerY + 0.075);
+        }
+
+        return [
+            'xMin' => round($nxMin, 4),
+            'yMin' => round($nyMin, 4),
+            'xMax' => round($nxMax, 4),
+            'yMax' => round($nyMax, 4)
+        ];
+    }
+}

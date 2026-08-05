@@ -1135,31 +1135,21 @@ if ($path === '/detection' && $method === 'POST') {
                     $hamaConf = $conf;
                     $hamaName = $foundPest;
                 }
-                $x = (float)$pred['x']; $y = (float)$pred['y'];
-                $w = (float)$pred['width']; $h = (float)$pred['height'];
-                $xMin = max(0.0, min(1.0, ($x - $w/2) / $imgW));
-                $yMin = max(0.0, min(1.0, ($y - $h/2) / $imgH));
-                $xMax = max(0.0, min(1.0, ($x + $w/2) / $imgW));
-                $yMax = max(0.0, min(1.0, ($y + $h/2) / $imgH));
-
-                // SMART BOUNDING BOX ADAPTER: Jika bounding box hama terlalu kecil (< 35%) atau menempel di pojok,
-                // perluas dan terpusatkan agar jelas dan mudah dibaca oleh Petani
-                $boxW = $xMax - $xMin;
-                $boxH = $yMax - $yMin;
-                if ($boxW < 0.35 || $boxH < 0.35 || $xMin < 0.08 || $yMin < 0.08) {
-                    $centerX = ($xMin + $xMax) / 2;
-                    $centerY = ($yMin + $yMax) / 2;
-                    if ($centerX < 0.35 && $centerY < 0.35) {
-                        // Jika di pojok atas, pusatkan ke area dominan tengah gambar
-                        $xMin = 0.15; $yMin = 0.15; $xMax = 0.85; $yMax = 0.85;
-                    } else {
-                        $halfW = max(0.30, $boxW * 1.5);
-                        $halfH = max(0.30, $boxH * 1.5);
-                        $xMin = max(0.08, min(0.35, $centerX - $halfW));
-                        $yMin = max(0.08, min(0.35, $centerY - $halfH));
-                        $xMax = min(0.92, max(0.65, $centerX + $halfW));
-                        $yMax = min(0.92, max(0.65, $centerY + $halfH));
-                    }
+                // SMART BOUNDING BOX: Targetkan area terdampak hama saja (putih/coklat)
+                $damaged = detectDamagedArea($targetPath);
+                if ($damaged) {
+                    $xMin = $damaged['xMin'];
+                    $yMin = $damaged['yMin'];
+                    $xMax = $damaged['xMax'];
+                    $yMax = $damaged['yMax'];
+                } else {
+                    // Fallback ke bbox model Roboflow jika analisis piksel gagal
+                    $x = (float)$pred['x']; $y = (float)$pred['y'];
+                    $w = (float)$pred['width']; $h = (float)$pred['height'];
+                    $xMin = max(0.0, min(1.0, ($x - $w/2) / $imgW));
+                    $yMin = max(0.0, min(1.0, ($y - $h/2) / $imgH));
+                    $xMax = max(0.0, min(1.0, ($x + $w/2) / $imgW));
+                    $yMax = max(0.0, min(1.0, ($y + $h/2) / $imgH));
                 }
 
                 $boxes[] = [
@@ -1226,9 +1216,15 @@ if ($path === '/detection' && $method === 'POST') {
             if ($dsPest !== null) {
                 $hamaName = $dsPest;
                 $hamaConf = min(0.96, round(0.85 + ((15 - $realDistance) / 100), 2));
+                // Targetkan bbox ke area terdampak hama saja
+                $damaged = detectDamagedArea($targetPath);
+                $bxMin = $damaged ? $damaged['xMin'] : 0.15;
+                $byMin = $damaged ? $damaged['yMin'] : 0.15;
+                $bxMax = $damaged ? $damaged['xMax'] : 0.85;
+                $byMax = $damaged ? $damaged['yMax'] : 0.85;
                 $boxes[] = [
                     'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                    'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
+                    'xMin' => $bxMin, 'yMin' => $byMin, 'xMax' => $bxMax, 'yMax' => $byMax,
                     'isHama' => true
                 ];
             }
@@ -1251,12 +1247,19 @@ if ($path === '/detection' && $method === 'POST') {
     // =========================================================================
     // STEP 5: GEMINI VISION AI CROSS-CHECK
     // =========================================================================
+    // Hitung area terdampak sekali saja untuk dipakai di Gemini fallback
+    $damagedForGemini = detectDamagedArea($targetPath);
+    $gxMin = $damagedForGemini ? $damagedForGemini['xMin'] : 0.15;
+    $gyMin = $damagedForGemini ? $damagedForGemini['yMin'] : 0.15;
+    $gxMax = $damagedForGemini ? $damagedForGemini['xMax'] : 0.85;
+    $gyMax = $damagedForGemini ? $damagedForGemini['yMax'] : 0.85;
+
     if ($hamaName === null && $geminiHama !== null) {
         $hamaName = $geminiHama;
         $hamaConf = $geminiHamaConf > 0 ? $geminiHamaConf : 0.88;
         $boxes[] = [
             'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-            'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
+            'xMin' => $gxMin, 'yMin' => $gyMin, 'xMax' => $gxMax, 'yMax' => $gyMax,
             'isHama' => true
         ];
     } else if ($hamaName === null) {
@@ -1267,7 +1270,7 @@ if ($path === '/detection' && $method === 'POST') {
             $hamaConf = (float)($geminiRes['confidence'] ?? 0.85);
             $boxes[] = [
                 'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
+                'xMin' => $gxMin, 'yMin' => $gyMin, 'xMax' => $gxMax, 'yMax' => $gyMax,
                 'isHama' => true
             ];
         }
