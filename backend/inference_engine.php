@@ -511,6 +511,7 @@ if (!function_exists('detectDamagedAreas')) {
      * Deteksi MULTI-AREA terdampak hama pada gambar sawah berdasarkan analisis piksel.
      * Menggunakan spatial clustering (grid-based flood-fill) untuk mengelompokkan
      * piksel terdampak (Wereng Coklat, Penggerek Batang, hopperburn, beluk, sundep).
+     * Mengecualikan area langit/horizon di bagian atas foto.
      *
      * @param string $imagePath Path ke file gambar
      * @return array Array of bounding boxes normalized 0-1
@@ -551,9 +552,12 @@ if (!function_exists('detectDamagedAreas')) {
             }
         }
 
+        // Mulai scan dari gy = 10 (top 17% diabaikan untuk menghindari langit/horizon)
+        $startGy = (int)($gridY * 0.17);
+
         for ($gx = 0; $gx < $gridX; $gx++) {
             $px = min($w - 1, $gx * $stepX);
-            for ($gy = 0; $gy < $gridY; $gy++) {
+            for ($gy = $startGy; $gy < $gridY; $gy++) {
                 $py = min($h - 1, $gy * $stepY);
                 $totalSamples++;
 
@@ -565,6 +569,11 @@ if (!function_exists('detectDamagedAreas')) {
 
                 $saturation = max($r, $g, $b) - min($r, $g, $b);
                 $isDamaged = false;
+
+                // Abaikan warna langit terang / awan / horizon di bagian atas
+                if ($py < $h * 0.25 && ($b > 130 || ($r > 175 && $g > 165 && $b > 135) || ($saturation < 40 && $r > 160))) {
+                    continue;
+                }
 
                 // 1. Gejala Wereng Coklat: Putih / Kuning Pucat (hopperburn — daun memutih/menguning)
                 if ($r > 165 && $g > 150 && $b > 120 && ($r - $b) > 10) {
@@ -616,7 +625,7 @@ if (!function_exists('detectDamagedAreas')) {
         $clusters = [];
 
         for ($gx = 0; $gx < $gridX; $gx++) {
-            for ($gy = 0; $gy < $gridY; $gy++) {
+            for ($gy = $startGy; $gy < $gridY; $gy++) {
                 if ($grid[$gx][$gy] && !$visited[$gx][$gy]) {
                     $cluster = [];
                     $queue = [[$gx, $gy]];
@@ -631,7 +640,7 @@ if (!function_exists('detectDamagedAreas')) {
                                 if ($dx === 0 && $dy === 0) continue;
                                 $nx = $cx + $dx;
                                 $ny = $cy + $dy;
-                                if ($nx >= 0 && $nx < $gridX && $ny >= 0 && $ny < $gridY
+                                if ($nx >= 0 && $nx < $gridX && $ny >= $startGy && $ny < $gridY
                                     && $grid[$nx][$ny] && !$visited[$nx][$ny]) {
                                     $visited[$nx][$ny] = true;
                                     $queue[] = [$nx, $ny];
@@ -664,11 +673,11 @@ if (!function_exists('detectDamagedAreas')) {
                 if ($cell['gy'] > $cMaxY) $cMaxY = $cell['gy'];
             }
 
-            // Batasi koordinat agar selalu DI DALAM bounding box kematangan (0.08 - 0.92)
+            // Batasi koordinat agar selalu DI DALAM area sawah (yMin >= 0.20, yMax <= 0.90)
             $nxMin = max(0.08, ($cMinX * $stepX / $w) - 0.01);
-            $nyMin = max(0.08, ($cMinY * $stepY / $h) - 0.01);
+            $nyMin = max(0.20, ($cMinY * $stepY / $h) - 0.01);
             $nxMax = min(0.92, (($cMaxX + 1) * $stepX / $w) + 0.01);
-            $nyMax = min(0.92, (($cMaxY + 1) * $stepY / $h) + 0.01);
+            $nyMax = min(0.90, (($cMaxY + 1) * $stepY / $h) + 0.01);
 
             $bboxW = $nxMax - $nxMin;
             $bboxH = $nyMax - $nyMin;
@@ -705,7 +714,7 @@ if (!function_exists('detectDamagedArea')) {
 if (!function_exists('cleanNmsBoxes')) {
     /**
      * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box Hama:
-     * - Memastikan box hama tidak pernah keluar dari batas kematangan (0.08 - 0.92)
+     * - Memastikan box hama tidak pernah keluar ke langit (yMin >= 0.20)
      * - Luas maksimal box hama dipatok 45% dari area gambar
      */
     function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.015, $maxBoxes = 3) {
@@ -713,11 +722,11 @@ if (!function_exists('cleanNmsBoxes')) {
 
         $filtered = [];
         foreach ($boxes as $b) {
-            // Cap koordinat agar selalu di dalam box kematangan
+            // Cap koordinat agar selalu di dalam area sawah (yMin >= 0.20)
             $xMin = max(0.08, $b['xMin']);
-            $yMin = max(0.08, $b['yMin']);
+            $yMin = max(0.20, $b['yMin']);
             $xMax = min(0.92, $b['xMax']);
-            $yMax = min(0.92, $b['yMax']);
+            $yMax = min(0.90, $b['yMax']);
 
             $w = $xMax - $xMin;
             $h = $yMax - $yMin;
