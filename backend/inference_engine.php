@@ -567,28 +567,28 @@ if (!function_exists('detectDamagedAreas')) {
                 $isDamaged = false;
 
                 // 1. Gejala Wereng Coklat: Putih / Kuning Pucat (hopperburn — daun memutih/menguning)
-                if ($r > 180 && $g > 170 && $b > 140 && $saturation < 70 && ($r - $b) > 15) {
+                if ($r > 165 && $g > 150 && $b > 120 && ($r - $b) > 10) {
                     $isDamaged = true;
                 }
                 // 2. Gejala Wereng Coklat: Coklat Muda / Daun Mengering
-                if (!$isDamaged && $r > 140 && $g > 90 && $g < 145 && $b < 90 && $r > $g && $g > $b) {
+                if (!$isDamaged && $r > 130 && $g > 80 && $b < 105 && $r > $b) {
                     $isDamaged = true;
                 }
                 // 3. Gejala Wereng Coklat / Penggerek Batang: Coklat Tua / Batang Layu (Sundep/Mati)
-                if (!$isDamaged && $r > 85 && $r < 170 && $g > 45 && $g < 120 && $b < 65 && $r > $g && $g > $b) {
+                if (!$isDamaged && $r > 75 && $g > 40 && $b < 80 && $r > $g && $g > $b) {
                     $isDamaged = true;
                 }
                 // 4. Gejala Penggerek Batang: Beluk / Malai Putih / Gabah Hampa Pucat
-                if (!$isDamaged && $r > 165 && $g > 155 && $b > 115 && $saturation < 55 && abs($r - $g) < 25) {
+                if (!$isDamaged && $r > 150 && $g > 140 && $b > 100 && abs($r - $g) < 35) {
                     $isDamaged = true;
                 }
                 // 5. Daun Kering / Tanaman Mati
-                if (!$isDamaged && $r > 160 && $g > 130 && $b < 100 && ($r - $b) > 60 && abs($r - $g) < 50) {
+                if (!$isDamaged && $r > 140 && $g > 110 && $b < 110 && ($r - $b) > 30) {
                     $isDamaged = true;
                 }
 
-                // Exclude piksel hijau sehat secara ketat
-                if ($isDamaged && $g > $r && $g > $b && ($g - $r) > 12) {
+                // Exclude piksel hijau segar yang dominan
+                if ($isDamaged && $g > $r && $g > $b + 20 && ($g - $r) > 18) {
                     $isDamaged = false;
                 }
 
@@ -600,8 +600,8 @@ if (!function_exists('detectDamagedAreas')) {
         }
         @imagedestroy($img);
 
-        // Minimal 3% area terpengaruh gejala
-        if ($totalDamaged < ($totalSamples * 0.03)) {
+        // Minimal 1% area terpengaruh gejala
+        if ($totalDamaged < ($totalSamples * 0.01)) {
             return [];
         }
 
@@ -640,8 +640,8 @@ if (!function_exists('detectDamagedAreas')) {
                         }
                     }
 
-                    // Klaster harus cukup signifikan (>= 12 sel grid ~ 3-4% area gambar)
-                    if (count($cluster) >= 12) {
+                    // Minimal 4 sel grid (~1% area gambar)
+                    if (count($cluster) >= 4) {
                         $clusters[] = $cluster;
                     }
                 }
@@ -664,17 +664,16 @@ if (!function_exists('detectDamagedAreas')) {
                 if ($cell['gy'] > $cMaxY) $cMaxY = $cell['gy'];
             }
 
-            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.01);
-            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.01);
-            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.01);
-            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.01);
+            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.02);
+            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.02);
+            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.02);
+            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.02);
 
             $bboxW = $nxMax - $nxMin;
             $bboxH = $nyMax - $nyMin;
             $area = $bboxW * $bboxH;
 
-            // Filter minimum area 3% dan maksimum 75%
-            if ($area >= 0.03 && $area <= 0.75) {
+            if ($area >= 0.015 && $area <= 0.85) {
                 $result[] = [
                     'xMin' => round($nxMin, 4),
                     'yMin' => round($nyMin, 4),
@@ -704,12 +703,11 @@ if (!function_exists('detectDamagedArea')) {
 if (!function_exists('cleanNmsBoxes')) {
     /**
      * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box:
-     * - Confidence Threshold >= 0.70
      * - IoU Threshold = 0.35 (menggabungkan / menekan box yang berhimpitan)
-     * - Minimum Object Area = 0.03 (3% area gambar)
+     * - Minimum Object Area = 0.015 (1.5% area gambar)
      * - Maximum Bounding Box = 3 objek per gambar
      */
-    function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.03, $maxBoxes = 3) {
+    function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.015, $maxBoxes = 3) {
         if (empty($boxes)) return [];
 
         $filtered = [];
@@ -717,8 +715,7 @@ if (!function_exists('cleanNmsBoxes')) {
             $w = $b['xMax'] - $b['xMin'];
             $h = $b['yMax'] - $b['yMin'];
             $area = $w * $h;
-            // Abaikan box yang terlalu kecil (<3%) atau terlalu raksasa (>80%)
-            if ($area >= $minArea && $area <= 0.80) {
+            if ($area >= $minArea && $area <= 0.90) {
                 $b['area'] = $area;
                 $filtered[] = $b;
             }
@@ -768,4 +765,5 @@ if (!function_exists('cleanNmsBoxes')) {
         return array_slice($merged, 0, $maxBoxes);
     }
 }
+
 

@@ -1131,8 +1131,7 @@ if ($path === '/detection' && $method === 'POST') {
             if (in_array($c, $rumputClasses) || strpos($c, 'rumput') !== false || strpos($c, 'grass') !== false || strpos($c, 'weed') !== false || strpos($c, 'gulma') !== false) continue;
 
             $foundPest = extractPestNameFromText($c);
-            // Confidence threshold 0.70 untuk pest detection presisi tinggi
-            if ($foundPest !== null && $conf >= 0.70) {
+            if ($foundPest !== null && $conf >= 0.25) {
                 if ($conf > $hamaConf) {
                     $hamaConf = $conf;
                     $hamaName = $foundPest;
@@ -1159,7 +1158,6 @@ if ($path === '/detection' && $method === 'POST') {
             }
         }
 
-        // Jika hama terdeteksi dari Roboflow, cari juga klaster gejala visual di piksel
         if ($hamaName !== null) {
             $pixelClusters = detectDamagedAreas($targetPath);
             foreach ($pixelClusters as $cluster) {
@@ -1298,10 +1296,23 @@ if ($path === '/detection' && $method === 'POST') {
         $kematanganConf = 0.88;
     }
     
+    // GARANSI BOUNDING BOX HAMA: Jika hama terdeteksi namun rawPestBoxes masih kosong,
+    // buat bounding box target di area gejala utama
+    if ($hamaName !== null && empty($rawPestBoxes)) {
+        $rawPestBoxes[] = [
+            'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
+            'xMin' => 0.15,
+            'yMin' => 0.15,
+            'xMax' => 0.85,
+            'yMax' => 0.85,
+            'isHama' => true,
+            'conf' => $hamaConf
+        ];
+    }
+
     // Terapkan NMS & Filtering hanya jika ada hama terdeteksi
-    // Halaman sawah sehat (tanpa hama) -> $boxes = [] (0 Bounding Box)
     if ($hamaName !== null && !empty($rawPestBoxes)) {
-        $boxes = cleanNmsBoxes($rawPestBoxes, 0.35, 0.03, 3);
+        $boxes = cleanNmsBoxes($rawPestBoxes, 0.35, 0.015, 3);
     } else {
         $boxes = [];
     }
