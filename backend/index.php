@@ -1123,42 +1123,31 @@ if ($path === '/detection' && $method === 'POST') {
             }
         }
 
+        $rawPestBoxes = [];
+
         foreach ($predictions as $pred) {
             $c = strtolower(trim($pred['class'] ?? ''));
             $conf = (float)($pred['confidence'] ?? 0.0);
             if (in_array($c, $rumputClasses) || strpos($c, 'rumput') !== false || strpos($c, 'grass') !== false || strpos($c, 'weed') !== false || strpos($c, 'gulma') !== false) continue;
 
             $foundPest = extractPestNameFromText($c);
-            if ($foundPest !== null && $conf >= 0.30) {
+            // Confidence threshold 0.70 untuk pest detection presisi tinggi
+            if ($foundPest !== null && $conf >= 0.70) {
                 if ($conf > $hamaConf) {
                     $hamaConf = $conf;
                     $hamaName = $foundPest;
                 }
-                // SMART MULTI-BOX: Targetkan setiap area terdampak hama secara terpisah
-                $damagedAreas = detectDamagedAreas($targetPath);
-                if (!empty($damagedAreas)) {
-                    foreach ($damagedAreas as $idx => $area) {
-                        $boxes[] = [
-                            'label' => "$foundPest (" . round($conf * 100) . "%)",
-                            'xMin' => $area['xMin'], 'yMin' => $area['yMin'],
-                            'xMax' => $area['xMax'], 'yMax' => $area['yMax'],
-                            'isHama' => true
-                        ];
-                    }
-                } else {
-                    // Fallback ke bbox model Roboflow jika analisis piksel gagal
-                    $x = (float)$pred['x']; $y = (float)$pred['y'];
-                    $w = (float)$pred['width']; $h = (float)$pred['height'];
-                    $xMin = max(0.0, min(1.0, ($x - $w/2) / $imgW));
-                    $yMin = max(0.0, min(1.0, ($y - $h/2) / $imgH));
-                    $xMax = max(0.0, min(1.0, ($x + $w/2) / $imgW));
-                    $yMax = max(0.0, min(1.0, ($y + $h/2) / $imgH));
-                    $boxes[] = [
-                        'label' => "$foundPest (" . round($conf * 100) . "%)",
-                        'xMin' => $xMin, 'yMin' => $yMin, 'xMax' => $xMax, 'yMax' => $yMax,
-                        'isHama' => true
-                    ];
-                }
+                $x = (float)$pred['x']; $y = (float)$pred['y'];
+                $w = (float)$pred['width']; $h = (float)$pred['height'];
+                $rawPestBoxes[] = [
+                    'label' => "$foundPest (" . round($conf * 100) . "%)",
+                    'xMin' => max(0.0, min(1.0, ($x - $w/2) / $imgW)),
+                    'yMin' => max(0.0, min(1.0, ($y - $h/2) / $imgH)),
+                    'xMax' => max(0.0, min(1.0, ($x + $w/2) / $imgW)),
+                    'yMax' => max(0.0, min(1.0, ($y + $h/2) / $imgH)),
+                    'isHama' => true,
+                    'conf' => $conf
+                ];
             }
 
             $foundMat = extractMaturityFromText($c);
@@ -1167,6 +1156,20 @@ if ($path === '/detection' && $method === 'POST') {
                     $kematanganConf = $conf;
                     $kematangan = $foundMat;
                 }
+            }
+        }
+
+        // Jika hama terdeteksi dari Roboflow, cari juga klaster gejala visual di piksel
+        if ($hamaName !== null) {
+            $pixelClusters = detectDamagedAreas($targetPath);
+            foreach ($pixelClusters as $cluster) {
+                $rawPestBoxes[] = [
+                    'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
+                    'xMin' => $cluster['xMin'], 'yMin' => $cluster['yMin'],
+                    'xMax' => $cluster['xMax'], 'yMax' => $cluster['yMax'],
+                    'isHama' => true,
+                    'conf' => $hamaConf
+                ];
             }
         }
     }
@@ -1218,22 +1221,14 @@ if ($path === '/detection' && $method === 'POST') {
             if ($dsPest !== null) {
                 $hamaName = $dsPest;
                 $hamaConf = min(0.96, round(0.85 + ((15 - $realDistance) / 100), 2));
-                // Targetkan bbox ke setiap area terdampak hama secara terpisah
-                $damagedAreas = detectDamagedAreas($targetPath);
-                if (!empty($damagedAreas)) {
-                    foreach ($damagedAreas as $area) {
-                        $boxes[] = [
-                            'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                            'xMin' => $area['xMin'], 'yMin' => $area['yMin'],
-                            'xMax' => $area['xMax'], 'yMax' => $area['yMax'],
-                            'isHama' => true
-                        ];
-                    }
-                } else {
-                    $boxes[] = [
+                $pixelClusters = detectDamagedAreas($targetPath);
+                foreach ($pixelClusters as $cluster) {
+                    $rawPestBoxes[] = [
                         'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                        'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
-                        'isHama' => true
+                        'xMin' => $cluster['xMin'], 'yMin' => $cluster['yMin'],
+                        'xMax' => $cluster['xMax'], 'yMax' => $cluster['yMax'],
+                        'isHama' => true,
+                        'conf' => $hamaConf
                     ];
                 }
             }
@@ -1256,26 +1251,17 @@ if ($path === '/detection' && $method === 'POST') {
     // =========================================================================
     // STEP 5: GEMINI VISION AI CROSS-CHECK
     // =========================================================================
-    // Hitung area terdampak sekali saja untuk dipakai di Gemini fallback
-    $damagedForGemini = detectDamagedAreas($targetPath);
-
     if ($hamaName === null && $geminiHama !== null) {
         $hamaName = $geminiHama;
         $hamaConf = $geminiHamaConf > 0 ? $geminiHamaConf : 0.88;
-        if (!empty($damagedForGemini)) {
-            foreach ($damagedForGemini as $area) {
-                $boxes[] = [
-                    'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                    'xMin' => $area['xMin'], 'yMin' => $area['yMin'],
-                    'xMax' => $area['xMax'], 'yMax' => $area['yMax'],
-                    'isHama' => true
-                ];
-            }
-        } else {
-            $boxes[] = [
+        $pixelClusters = detectDamagedAreas($targetPath);
+        foreach ($pixelClusters as $cluster) {
+            $rawPestBoxes[] = [
                 'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
-                'isHama' => true
+                'xMin' => $cluster['xMin'], 'yMin' => $cluster['yMin'],
+                'xMax' => $cluster['xMax'], 'yMax' => $cluster['yMax'],
+                'isHama' => true,
+                'conf' => $hamaConf
             ];
         }
     } else if ($hamaName === null) {
@@ -1284,20 +1270,14 @@ if ($path === '/detection' && $method === 'POST') {
         if ($geminiRes && !empty($geminiRes['hama_detected']) && !empty($geminiRes['hama_name'])) {
             $hamaName = $geminiRes['hama_name'];
             $hamaConf = (float)($geminiRes['confidence'] ?? 0.85);
-            if (!empty($damagedForGemini)) {
-                foreach ($damagedForGemini as $area) {
-                    $boxes[] = [
-                        'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                        'xMin' => $area['xMin'], 'yMin' => $area['yMin'],
-                        'xMax' => $area['xMax'], 'yMax' => $area['yMax'],
-                        'isHama' => true
-                    ];
-                }
-            } else {
-                $boxes[] = [
+            $pixelClusters = detectDamagedAreas($targetPath);
+            foreach ($pixelClusters as $cluster) {
+                $rawPestBoxes[] = [
                     'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-                    'xMin' => 0.15, 'yMin' => 0.15, 'xMax' => 0.85, 'yMax' => 0.85,
-                    'isHama' => true
+                    'xMin' => $cluster['xMin'], 'yMin' => $cluster['yMin'],
+                    'xMax' => $cluster['xMax'], 'yMax' => $cluster['yMax'],
+                    'isHama' => true,
+                    'conf' => $hamaConf
                 ];
             }
         }
@@ -1309,7 +1289,7 @@ if ($path === '/detection' && $method === 'POST') {
     }
 
     // =========================================================================
-    // STEP 6: ANALISIS PIKSEL KEMATANGAN (Deterministik)
+    // STEP 6: ANALISIS PIKSEL KEMATANGAN (Deterministik) & NMS FILTERING
     // =========================================================================
     if ($kematangan === null || $kematanganConf <= 0.0) {
         if ($kematangan === null) {
@@ -1318,19 +1298,12 @@ if ($path === '/detection' && $method === 'POST') {
         $kematanganConf = 0.88;
     }
     
-    $hasMaturityBox = false;
-    foreach ($boxes as $b) {
-        if (!($b['isHama'] ?? false)) {
-            $hasMaturityBox = true;
-            break;
-        }
-    }
-    if (!$hasMaturityBox) {
-        $boxes[] = [
-            'label' => "$kematangan (" . round($kematanganConf * 100) . "%)",
-            'xMin' => 0.05, 'yMin' => 0.05, 'xMax' => 0.95, 'yMax' => 0.95,
-            'isHama' => false
-        ];
+    // Terapkan NMS & Filtering hanya jika ada hama terdeteksi
+    // Halaman sawah sehat (tanpa hama) -> $boxes = [] (0 Bounding Box)
+    if ($hamaName !== null && !empty($rawPestBoxes)) {
+        $boxes = cleanNmsBoxes($rawPestBoxes, 0.35, 0.03, 3);
+    } else {
+        $boxes = [];
     }
 
     if ($hamaName) {

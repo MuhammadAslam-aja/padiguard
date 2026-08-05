@@ -510,12 +510,10 @@ if (!function_exists('detectDamagedAreas')) {
     /**
      * Deteksi MULTI-AREA terdampak hama pada gambar sawah berdasarkan analisis piksel.
      * Menggunakan spatial clustering (grid-based flood-fill) untuk mengelompokkan
-     * piksel terdampak menjadi klaster-klaster terpisah.
-     * Setiap klaster menghasilkan satu bounding box tersendiri.
+     * piksel terdampak (Wereng Coklat, Penggerek Batang, hopperburn, beluk, sundep).
      *
      * @param string $imagePath Path ke file gambar
-     * @return array Array of bounding boxes: [['xMin'=>float, 'yMin'=>float, 'xMax'=>float, 'yMax'=>float], ...]
-     *               Kosong jika tidak ada area terdampak yang cukup signifikan.
+     * @return array Array of bounding boxes normalized 0-1
      */
     function detectDamagedAreas($imagePath) {
         if (!file_exists($imagePath)) return [];
@@ -537,13 +535,12 @@ if (!function_exists('detectDamagedAreas')) {
         $w = imagesx($img);
         $h = imagesy($img);
 
-        // Grid sampling: 60x60 untuk resolusi klaster yang lebih baik
+        // Grid sampling: 60x60 titik sampel
         $gridX = 60;
         $gridY = 60;
         $stepX = max(1, (int)($w / $gridX));
         $stepY = max(1, (int)($h / $gridY));
 
-        // Buat grid 2D untuk menandai sel terdampak
         $grid = [];
         $totalSamples = 0;
         $totalDamaged = 0;
@@ -569,24 +566,29 @@ if (!function_exists('detectDamagedAreas')) {
                 $saturation = max($r, $g, $b) - min($r, $g, $b);
                 $isDamaged = false;
 
-                // 1. Putih / Kuning Pucat (hopperburn — daun menguning/memutih)
+                // 1. Gejala Wereng Coklat: Putih / Kuning Pucat (hopperburn — daun memutih/menguning)
                 if ($r > 180 && $g > 170 && $b > 140 && $saturation < 70 && ($r - $b) > 15) {
                     $isDamaged = true;
                 }
-                // 2. Coklat Muda (daun menguning ke coklat)
-                if (!$isDamaged && $r > 140 && $g > 90 && $g < 140 && $b < 90 && $r > $g && $g > $b) {
+                // 2. Gejala Wereng Coklat: Coklat Muda / Daun Mengering
+                if (!$isDamaged && $r > 140 && $g > 90 && $g < 145 && $b < 90 && $r > $g && $g > $b) {
                     $isDamaged = true;
                 }
-                // 3. Coklat Tua (daun mati, batang layu)
-                if (!$isDamaged && $r > 80 && $r < 170 && $g > 45 && $g < 120 && $b < 65 && $r > $g && $g > $b) {
+                // 3. Gejala Wereng Coklat / Penggerek Batang: Coklat Tua / Batang Layu (Sundep/Mati)
+                if (!$isDamaged && $r > 85 && $r < 170 && $g > 45 && $g < 120 && $b < 65 && $r > $g && $g > $b) {
                     $isDamaged = true;
                 }
-                // 4. Kuning Kering (gabah hampa, daun kering)
+                // 4. Gejala Penggerek Batang: Beluk / Malai Putih / Gabah Hampa Pucat
+                if (!$isDamaged && $r > 165 && $g > 155 && $b > 115 && $saturation < 55 && abs($r - $g) < 25) {
+                    $isDamaged = true;
+                }
+                // 5. Daun Kering / Tanaman Mati
                 if (!$isDamaged && $r > 160 && $g > 130 && $b < 100 && ($r - $b) > 60 && abs($r - $g) < 50) {
                     $isDamaged = true;
                 }
-                // Exclude piksel hijau sehat
-                if ($isDamaged && $g > $r && $g > $b && ($g - $r) > 15) {
+
+                // Exclude piksel hijau sehat secara ketat
+                if ($isDamaged && $g > $r && $g > $b && ($g - $r) > 12) {
                     $isDamaged = false;
                 }
 
@@ -598,15 +600,12 @@ if (!function_exists('detectDamagedAreas')) {
         }
         @imagedestroy($img);
 
-        // Harus ada minimal 3% piksel terdampak untuk dianggap valid
+        // Minimal 3% area terpengaruh gejala
         if ($totalDamaged < ($totalSamples * 0.03)) {
             return [];
         }
 
-        // =====================================================================
-        // FLOOD-FILL CLUSTERING: Kelompokkan sel grid yang saling berdekatan
-        // Setiap klaster = satu area serangan hama terpisah
-        // =====================================================================
+        // FLOOD-FILL CLUSTERING
         $visited = [];
         for ($gx = 0; $gx < $gridX; $gx++) {
             for ($gy = 0; $gy < $gridY; $gy++) {
@@ -619,7 +618,6 @@ if (!function_exists('detectDamagedAreas')) {
         for ($gx = 0; $gx < $gridX; $gx++) {
             for ($gy = 0; $gy < $gridY; $gy++) {
                 if ($grid[$gx][$gy] && !$visited[$gx][$gy]) {
-                    // BFS flood-fill untuk menemukan semua sel terhubung
                     $cluster = [];
                     $queue = [[$gx, $gy]];
                     $visited[$gx][$gy] = true;
@@ -628,8 +626,6 @@ if (!function_exists('detectDamagedAreas')) {
                         list($cx, $cy) = array_shift($queue);
                         $cluster[] = ['gx' => $cx, 'gy' => $cy];
 
-                        // Cek 8 tetangga (termasuk diagonal) dengan jangkauan 2 sel
-                        // untuk menghubungkan area yang dekat tapi tidak persis bersebelahan
                         for ($dx = -2; $dx <= 2; $dx++) {
                             for ($dy = -2; $dy <= 2; $dy++) {
                                 if ($dx === 0 && $dy === 0) continue;
@@ -644,8 +640,8 @@ if (!function_exists('detectDamagedAreas')) {
                         }
                     }
 
-                    // Klaster harus minimal 3 sel agar signifikan
-                    if (count($cluster) >= 3) {
+                    // Klaster harus cukup signifikan (>= 12 sel grid ~ 3-4% area gambar)
+                    if (count($cluster) >= 12) {
                         $clusters[] = $cluster;
                     }
                 }
@@ -656,15 +652,10 @@ if (!function_exists('detectDamagedAreas')) {
             return [];
         }
 
-        // =====================================================================
-        // Konversi setiap klaster menjadi bounding box (normalized 0-1)
-        // =====================================================================
         $result = [];
         foreach ($clusters as $cluster) {
-            $cMinX = $gridX;
-            $cMinY = $gridY;
-            $cMaxX = 0;
-            $cMaxY = 0;
+            $cMinX = $gridX; $cMinY = $gridY;
+            $cMaxX = 0;     $cMaxY = 0;
 
             foreach ($cluster as $cell) {
                 if ($cell['gx'] < $cMinX) $cMinX = $cell['gx'];
@@ -673,49 +664,108 @@ if (!function_exists('detectDamagedAreas')) {
                 if ($cell['gy'] > $cMaxY) $cMaxY = $cell['gy'];
             }
 
-            // Konversi grid coord ke normalized image coord
-            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.02);
-            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.02);
-            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.02);
-            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.02);
+            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.01);
+            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.01);
+            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.01);
+            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.01);
 
-            // Pastikan bbox tidak terlalu kecil (min 10% lebar/tinggi)
             $bboxW = $nxMax - $nxMin;
             $bboxH = $nyMax - $nyMin;
-            if ($bboxW < 0.10) {
-                $cx = ($nxMin + $nxMax) / 2;
-                $nxMin = max(0.0, $cx - 0.05);
-                $nxMax = min(1.0, $cx + 0.05);
-            }
-            if ($bboxH < 0.10) {
-                $cy = ($nyMin + $nyMax) / 2;
-                $nyMin = max(0.0, $cy - 0.05);
-                $nyMax = min(1.0, $cy + 0.05);
-            }
+            $area = $bboxW * $bboxH;
 
-            $result[] = [
-                'xMin' => round($nxMin, 4),
-                'yMin' => round($nyMin, 4),
-                'xMax' => round($nxMax, 4),
-                'yMax' => round($nyMax, 4),
-                'cellCount' => count($cluster)
-            ];
+            // Filter minimum area 3% dan maksimum 75%
+            if ($area >= 0.03 && $area <= 0.75) {
+                $result[] = [
+                    'xMin' => round($nxMin, 4),
+                    'yMin' => round($nyMin, 4),
+                    'xMax' => round($nxMax, 4),
+                    'yMax' => round($nyMax, 4),
+                    'cellCount' => count($cluster),
+                    'area' => $area
+                ];
+            }
         }
 
-        // Urutkan berdasarkan ukuran klaster (terbesar dulu)
         usort($result, function ($a, $b) {
             return $b['cellCount'] - $a['cellCount'];
         });
 
-        // Maksimal 6 bounding box untuk menghindari clutter visual
-        return array_slice($result, 0, 6);
+        return array_slice($result, 0, 3);
     }
 }
 
-// Backward compatibility wrapper — return single largest area
 if (!function_exists('detectDamagedArea')) {
     function detectDamagedArea($imagePath) {
         $areas = detectDamagedAreas($imagePath);
         return !empty($areas) ? $areas[0] : null;
     }
 }
+
+if (!function_exists('cleanNmsBoxes')) {
+    /**
+     * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box:
+     * - Confidence Threshold >= 0.70
+     * - IoU Threshold = 0.35 (menggabungkan / menekan box yang berhimpitan)
+     * - Minimum Object Area = 0.03 (3% area gambar)
+     * - Maximum Bounding Box = 3 objek per gambar
+     */
+    function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.03, $maxBoxes = 3) {
+        if (empty($boxes)) return [];
+
+        $filtered = [];
+        foreach ($boxes as $b) {
+            $w = $b['xMax'] - $b['xMin'];
+            $h = $b['yMax'] - $b['yMin'];
+            $area = $w * $h;
+            // Abaikan box yang terlalu kecil (<3%) atau terlalu raksasa (>80%)
+            if ($area >= $minArea && $area <= 0.80) {
+                $b['area'] = $area;
+                $filtered[] = $b;
+            }
+        }
+
+        if (empty($filtered)) return [];
+
+        // Urutkan berdasarkan area (terbesar/terjelas lebih dulu)
+        usort($filtered, function ($a, $b) {
+            return $b['area'] <=> $a['area'];
+        });
+
+        $merged = [];
+        foreach ($filtered as $box) {
+            $hasMerged = false;
+            foreach ($merged as &$m) {
+                // Hitung IoU
+                $interXmin = max($box['xMin'], $m['xMin']);
+                $interYmin = max($box['yMin'], $m['yMin']);
+                $interXmax = min($box['xMax'], $m['xMax']);
+                $interYmax = min($box['yMax'], $m['yMax']);
+
+                $interW = max(0.0, $interXmax - $interXmin);
+                $interH = max(0.0, $interYmax - $interYmin);
+                $interArea = $interW * $interH;
+
+                $unionArea = $box['area'] + $m['area'] - $interArea;
+                $iou = ($unionArea > 0) ? ($interArea / $unionArea) : 0.0;
+                $overlapMin = ($interArea > 0) ? ($interArea / min($box['area'], $m['area'])) : 0.0;
+
+                // Gabungkan jika IoU >= 0.35 atau tumpang tindih signifikan (>= 50%)
+                if ($iou >= $iouThreshold || $overlapMin >= 0.50) {
+                    $m['xMin'] = min($m['xMin'], $box['xMin']);
+                    $m['yMin'] = min($m['yMin'], $box['yMin']);
+                    $m['xMax'] = max($m['xMax'], $box['xMax']);
+                    $m['yMax'] = max($m['yMax'], $box['yMax']);
+                    $m['area'] = ($m['xMax'] - $m['xMin']) * ($m['yMax'] - $m['yMin']);
+                    $hasMerged = true;
+                    break;
+                }
+            }
+            if (!$hasMerged) {
+                $merged[] = $box;
+            }
+        }
+
+        return array_slice($merged, 0, $maxBoxes);
+    }
+}
+

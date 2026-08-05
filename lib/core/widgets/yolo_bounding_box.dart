@@ -103,15 +103,17 @@ class YoloBoundingBox extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // Tag Label
+                      // Tag Label (Positioned inside top-left if box is near top edge)
                       Positioned(
-                        top: -24,
-                        left: -2,
+                        top: top < 24 ? 0 : -24,
+                        left: top < 24 ? 0 : -2,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: boxColor,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                            borderRadius: top < 24
+                                ? const BorderRadius.only(bottomRight: Radius.circular(4))
+                                : const BorderRadius.vertical(top: Radius.circular(4)),
                           ),
                           child: Text(
                             label,
