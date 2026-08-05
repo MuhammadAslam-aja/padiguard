@@ -30,6 +30,7 @@ class AppConstants {
   static const String keyUserRole = 'user_role';
   static const String keyUserName = 'user_name';
   static const String keyUserEmail = 'user_email';
+  static const String keyUserAvatar = 'user_avatar';
   static const String keyIsFirstTime = 'is_first_time';
   
   // Static Tips

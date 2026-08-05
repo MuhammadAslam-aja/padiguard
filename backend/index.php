@@ -790,9 +790,8 @@ if ($path === '/auth/avatar' && $method === 'POST') {
     }
 
     if (!$avatarUrl) {
-        // Fallback jika tidak ada data gambar
-        $seed = urlencode($currentUser['name'] . '_' . time());
-        $avatarUrl = "https://api.dicebear.com/7.x/adventurer/png?seed={$seed}";
+        // Upload gagal — kembalikan error, JANGAN timpa avatar lama di database
+        sendResponse(false, ['message' => 'Gagal mengunggah foto profil. Pastikan file valid (JPG/PNG/WEBP) dan ukuran tidak melebihi batas.'], 400);
     }
 
     $stmt = $pdo->prepare("UPDATE `users` SET `avatar` = ? WHERE `id` = ?");

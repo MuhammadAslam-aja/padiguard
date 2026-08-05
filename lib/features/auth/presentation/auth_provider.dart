@@ -69,6 +69,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final savedRole  = sharedPrefs.getString(AppConstants.keyUserRole);
       final savedName  = sharedPrefs.getString(AppConstants.keyUserName);
       final savedEmail = sharedPrefs.getString(AppConstants.keyUserEmail);
+      final savedAvatar = sharedPrefs.getString(AppConstants.keyUserAvatar);
       if (savedName != null && savedName.isNotEmpty && savedRole != null && savedRole.isNotEmpty) {
         final fallbackUser = UserModel(
           id: 'local_user',
@@ -76,7 +77,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           email: savedEmail ?? '',
           role: savedRole,
           createdAt: DateTime.now().toIso8601String(),
-          avatar: '',
+          avatar: savedAvatar ?? '',
         );
         state = AuthState.authenticated(fallbackUser);
       } else {
@@ -108,6 +109,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await sharedPrefs.setString(AppConstants.keyUserRole, user.role);
         await sharedPrefs.setString(AppConstants.keyUserName, user.name);
         await sharedPrefs.setString(AppConstants.keyUserEmail, user.email);
+        await sharedPrefs.setString(AppConstants.keyUserAvatar, user.avatar);
 
         // Set pending notification sebelum perpindahan state/halaman
         _ref.read(pendingNotificationProvider.notifier).state = PendingNotification(
@@ -193,6 +195,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (response.statusCode == 200 && response.data['success'] == true) {
         final updatedUser = UserModel.fromJson(response.data['user']);
         await sharedPrefs.setString(AppConstants.keyUserName, updatedUser.name);
+        await sharedPrefs.setString(AppConstants.keyUserAvatar, updatedUser.avatar);
         state = AuthState.authenticated(updatedUser);
         return true;
       }
@@ -230,6 +233,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         
         if (response.statusCode == 200 && response.data['success'] == true) {
           final updatedUser = UserModel.fromJson(response.data['user']);
+          // Persist avatar URL ke SharedPreferences agar survive offline/restart
+          final sharedPrefs = _ref.read(sharedPrefsProvider);
+          await sharedPrefs.setString(AppConstants.keyUserAvatar, updatedUser.avatar);
           state = AuthState.authenticated(updatedUser);
           return true;
         }
@@ -265,6 +271,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await sharedPrefs.remove(AppConstants.keyUserRole);
     await sharedPrefs.remove(AppConstants.keyUserName);
     await sharedPrefs.remove(AppConstants.keyUserEmail);
+    await sharedPrefs.remove(AppConstants.keyUserAvatar);
 
     _ref.read(pendingNotificationProvider.notifier).state = const PendingNotification(
       title: 'Keluar Berhasil',
