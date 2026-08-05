@@ -664,16 +664,18 @@ if (!function_exists('detectDamagedAreas')) {
                 if ($cell['gy'] > $cMaxY) $cMaxY = $cell['gy'];
             }
 
-            $nxMin = max(0.0, ($cMinX * $stepX / $w) - 0.02);
-            $nyMin = max(0.0, ($cMinY * $stepY / $h) - 0.02);
-            $nxMax = min(1.0, (($cMaxX + 1) * $stepX / $w) + 0.02);
-            $nyMax = min(1.0, (($cMaxY + 1) * $stepY / $h) + 0.02);
+            // Batasi koordinat agar selalu DI DALAM bounding box kematangan (0.08 - 0.92)
+            $nxMin = max(0.08, ($cMinX * $stepX / $w) - 0.01);
+            $nyMin = max(0.08, ($cMinY * $stepY / $h) - 0.01);
+            $nxMax = min(0.92, (($cMaxX + 1) * $stepX / $w) + 0.01);
+            $nyMax = min(0.92, (($cMaxY + 1) * $stepY / $h) + 0.01);
 
             $bboxW = $nxMax - $nxMin;
             $bboxH = $nyMax - $nyMin;
             $area = $bboxW * $bboxH;
 
-            if ($area >= 0.015 && $area <= 0.85) {
+            // Batasi luas maksimal box hama hingga 45% area agar tidak raksasa
+            if ($area >= 0.015 && $area <= 0.55) {
                 $result[] = [
                     'xMin' => round($nxMin, 4),
                     'yMin' => round($nyMin, 4),
@@ -702,20 +704,30 @@ if (!function_exists('detectDamagedArea')) {
 
 if (!function_exists('cleanNmsBoxes')) {
     /**
-     * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box:
-     * - IoU Threshold = 0.35 (menggabungkan / menekan box yang berhimpitan)
-     * - Minimum Object Area = 0.015 (1.5% area gambar)
-     * - Maximum Bounding Box = 3 objek per gambar
+     * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box Hama:
+     * - Memastikan box hama tidak pernah keluar dari batas kematangan (0.08 - 0.92)
+     * - Luas maksimal box hama dipatok 45% dari area gambar
      */
     function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.015, $maxBoxes = 3) {
         if (empty($boxes)) return [];
 
         $filtered = [];
         foreach ($boxes as $b) {
-            $w = $b['xMax'] - $b['xMin'];
-            $h = $b['yMax'] - $b['yMin'];
+            // Cap koordinat agar selalu di dalam box kematangan
+            $xMin = max(0.08, $b['xMin']);
+            $yMin = max(0.08, $b['yMin']);
+            $xMax = min(0.92, $b['xMax']);
+            $yMax = min(0.92, $b['yMax']);
+
+            $w = $xMax - $xMin;
+            $h = $yMax - $yMin;
             $area = $w * $h;
-            if ($area >= $minArea && $area <= 0.90) {
+
+            if ($area >= $minArea) {
+                $b['xMin'] = round($xMin, 4);
+                $b['yMin'] = round($yMin, 4);
+                $b['xMax'] = round($xMax, 4);
+                $b['yMax'] = round($yMax, 4);
                 $b['area'] = $area;
                 $filtered[] = $b;
             }
@@ -723,7 +735,6 @@ if (!function_exists('cleanNmsBoxes')) {
 
         if (empty($filtered)) return [];
 
-        // Urutkan berdasarkan area (terbesar/terjelas lebih dulu)
         usort($filtered, function ($a, $b) {
             return $b['area'] <=> $a['area'];
         });
@@ -732,7 +743,6 @@ if (!function_exists('cleanNmsBoxes')) {
         foreach ($filtered as $box) {
             $hasMerged = false;
             foreach ($merged as &$m) {
-                // Hitung IoU
                 $interXmin = max($box['xMin'], $m['xMin']);
                 $interYmin = max($box['yMin'], $m['yMin']);
                 $interXmax = min($box['xMax'], $m['xMax']);
@@ -746,13 +756,20 @@ if (!function_exists('cleanNmsBoxes')) {
                 $iou = ($unionArea > 0) ? ($interArea / $unionArea) : 0.0;
                 $overlapMin = ($interArea > 0) ? ($interArea / min($box['area'], $m['area'])) : 0.0;
 
-                // Gabungkan jika IoU >= 0.35 atau tumpang tindih signifikan (>= 50%)
-                if ($iou >= $iouThreshold || $overlapMin >= 0.50) {
-                    $m['xMin'] = min($m['xMin'], $box['xMin']);
-                    $m['yMin'] = min($m['yMin'], $box['yMin']);
-                    $m['xMax'] = max($m['xMax'], $box['xMax']);
-                    $m['yMax'] = max($m['yMax'], $box['yMax']);
-                    $m['area'] = ($m['xMax'] - $m['xMin']) * ($m['yMax'] - $m['yMin']);
+                // Cek calon box gabungan
+                $newXmin = min($m['xMin'], $box['xMin']);
+                $newYmin = min($m['yMin'], $box['yMin']);
+                $newXmax = max($m['xMax'], $box['xMax']);
+                $newYmax = max($m['yMax'], $box['yMax']);
+                $newArea = ($newXmax - $newXmin) * ($newYmax - $newYmin);
+
+                // Hanya gabungkan jika luas gabungan tidak melebihi 45% gambar
+                if (($iou >= $iouThreshold || $overlapMin >= 0.50) && $newArea <= 0.45) {
+                    $m['xMin'] = $newXmin;
+                    $m['yMin'] = $newYmin;
+                    $m['xMax'] = $newXmax;
+                    $m['yMax'] = $newYmax;
+                    $m['area'] = $newArea;
                     $hasMerged = true;
                     break;
                 }

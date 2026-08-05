@@ -1297,14 +1297,14 @@ if ($path === '/detection' && $method === 'POST') {
     }
     
     // GARANSI BOUNDING BOX HAMA: Jika hama terdeteksi namun rawPestBoxes masih kosong,
-    // buat bounding box target di area gejala utama
+    // buat bounding box target di area gejala utama (di dalam box kematangan)
     if ($hamaName !== null && empty($rawPestBoxes)) {
         $rawPestBoxes[] = [
             'label' => "$hamaName (" . round($hamaConf * 100) . "%)",
-            'xMin' => 0.15,
-            'yMin' => 0.15,
-            'xMax' => 0.85,
-            'yMax' => 0.85,
+            'xMin' => 0.20,
+            'yMin' => 0.22,
+            'xMax' => 0.80,
+            'yMax' => 0.78,
             'isHama' => true,
             'conf' => $hamaConf
         ];
