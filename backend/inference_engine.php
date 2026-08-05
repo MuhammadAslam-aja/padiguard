@@ -713,9 +713,10 @@ if (!function_exists('detectDamagedArea')) {
 
 if (!function_exists('cleanNmsBoxes')) {
     /**
-     * Non-Maximum Suppression (NMS) & Filtering untuk Bounding Box Hama:
+     * Non-Maximum Suppression (NMS) & Containment Suppression untuk Bounding Box Hama:
      * - Memastikan box hama tidak pernah keluar ke langit (yMin >= 0.20)
-     * - Luas maksimal box hama dipatok 45% dari area gambar
+     * - Menghilangkan "box di dalam box" (menekan box raksasa jika ada box gejala spesifik di dalamnya)
+     * - Maksimal 3 bounding box per gambar
      */
     function cleanNmsBoxes($boxes, $iouThreshold = 0.35, $minArea = 0.015, $maxBoxes = 3) {
         if (empty($boxes)) return [];
@@ -732,7 +733,7 @@ if (!function_exists('cleanNmsBoxes')) {
             $h = $yMax - $yMin;
             $area = $w * $h;
 
-            if ($area >= $minArea) {
+            if ($area >= $minArea && $area <= 0.55) {
                 $b['xMin'] = round($xMin, 4);
                 $b['yMin'] = round($yMin, 4);
                 $b['xMax'] = round($xMax, 4);
@@ -744,51 +745,44 @@ if (!function_exists('cleanNmsBoxes')) {
 
         if (empty($filtered)) return [];
 
+        // Sort dari area terkecil ke terbesar untuk memprioritaskan box spesifik gejala
         usort($filtered, function ($a, $b) {
-            return $b['area'] <=> $a['area'];
+            return $a['area'] <=> $b['area'];
         });
 
-        $merged = [];
-        foreach ($filtered as $box) {
-            $hasMerged = false;
-            foreach ($merged as &$m) {
-                $interXmin = max($box['xMin'], $m['xMin']);
-                $interYmin = max($box['yMin'], $m['yMin']);
-                $interXmax = min($box['xMax'], $m['xMax']);
-                $interYmax = min($box['yMax'], $m['yMax']);
+        $finalBoxes = [];
+        foreach ($filtered as $candidate) {
+            $isOuterDuplicate = false;
+            foreach ($finalBoxes as $existing) {
+                // Hitung interseksi antara candidate dan box existing (yang lebih kecil/spesifik)
+                $interXmin = max($candidate['xMin'], $existing['xMin']);
+                $interYmin = max($candidate['yMin'], $existing['yMin']);
+                $interXmax = min($candidate['xMax'], $existing['xMax']);
+                $interYmax = min($candidate['yMax'], $existing['yMax']);
 
                 $interW = max(0.0, $interXmax - $interXmin);
                 $interH = max(0.0, $interYmax - $interYmin);
                 $interArea = $interW * $interH;
 
-                $unionArea = $box['area'] + $m['area'] - $interArea;
-                $iou = ($unionArea > 0) ? ($interArea / $unionArea) : 0.0;
-                $overlapMin = ($interArea > 0) ? ($interArea / min($box['area'], $m['area'])) : 0.0;
-
-                // Cek calon box gabungan
-                $newXmin = min($m['xMin'], $box['xMin']);
-                $newYmin = min($m['yMin'], $box['yMin']);
-                $newXmax = max($m['xMax'], $box['xMax']);
-                $newYmax = max($m['yMax'], $box['yMax']);
-                $newArea = ($newXmax - $newXmin) * ($newYmax - $newYmin);
-
-                // Hanya gabungkan jika luas gabungan tidak melebihi 45% gambar
-                if (($iou >= $iouThreshold || $overlapMin >= 0.50) && $newArea <= 0.45) {
-                    $m['xMin'] = $newXmin;
-                    $m['yMin'] = $newYmin;
-                    $m['xMax'] = $newXmax;
-                    $m['yMax'] = $newYmax;
-                    $m['area'] = $newArea;
-                    $hasMerged = true;
+                // Jika candidate (box lebih besar) mencakup >= 60% dari existing (box spesifik),
+                // maka candidate adalah box pembungkus raksasa yang redundan -> abaikan!
+                $overlapRatio = ($existing['area'] > 0) ? ($interArea / $existing['area']) : 0.0;
+                if ($overlapRatio >= 0.60 && $candidate['area'] > ($existing['area'] * 1.4)) {
+                    $isOuterDuplicate = true;
                     break;
                 }
             }
-            if (!$hasMerged) {
-                $merged[] = $box;
+            if (!$isOuterDuplicate) {
+                $finalBoxes[] = $candidate;
             }
         }
 
-        return array_slice($merged, 0, $maxBoxes);
+        // Urutkan kembali berdasarkan area
+        usort($finalBoxes, function ($a, $b) {
+            return $b['area'] <=> $a['area'];
+        });
+
+        return array_slice($finalBoxes, 0, $maxBoxes);
     }
 }
 
