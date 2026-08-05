@@ -1317,6 +1317,24 @@ if ($path === '/detection' && $method === 'POST') {
         $boxes = [];
     }
 
+    // Restore Bounding Box Kematangan Padi (Hijau)
+    if ($kematangan !== null) {
+        $hasMaturityBox = false;
+        foreach ($boxes as $b) {
+            if (!($b['isHama'] ?? false)) {
+                $hasMaturityBox = true;
+                break;
+            }
+        }
+        if (!$hasMaturityBox) {
+            $boxes[] = [
+                'label' => "$kematangan (" . round($kematanganConf * 100) . "%)",
+                'xMin' => 0.05, 'yMin' => 0.05, 'xMax' => 0.95, 'yMax' => 0.95,
+                'isHama' => false
+            ];
+        }
+    }
+
     if ($hamaName) {
         $hamaInfo = isset($hamaDetails[$hamaName]) ? $hamaDetails[$hamaName] : $hamaDetails[null];
         $dangerLevel = $hamaInfo['danger'];
