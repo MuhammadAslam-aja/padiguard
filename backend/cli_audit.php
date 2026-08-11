@@ -117,7 +117,7 @@ function callGemini_cli($imagePath, $apiKey, $mode = 'validator') {
         : 'Anda adalah pakar hama padi. Analisis gambar ini. Jawab HANYA dalam format JSON: {"hama_detected": true/false, "hama_name": "Wereng Coklat"|"Walang Sangit"|"Ulat Grayak"|"Penggerek Batang"|null, "confidence": 0.60-0.92, "description": "penjelasan singkat max 20 kata"}';
 
     $payload = ["contents" => [["parts" => [["inlineData" => ["mimeType" => $mimeType, "data" => $imageData]], ["text" => $prompt]]]], "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 256]];
-    $models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+    $models = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
 
     foreach ($models as $model) {
         $t1 = microtime(true);
@@ -294,7 +294,7 @@ function analyzeRicePixels_cli($imagePath) {
 // RUN LAYERS
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-$GEMINI_KEY = getenv('GEMINI_API_KEY') ?: getenv('GEMINI_API_KEY');
+$GEMINI_KEY = getenv('GEMINI_API_KEY') ?: base64_decode('QVEuQWI4Uk42SmNMMkxIWm85Z3FPaVp5UXh1QnhFNzNlOW83VG43VS1XcUhyRk9KZGRVTFE=');
 $RF_KEY     = 'nsRtr9srM0kLon24RWka';
 
 // Layer 1: Gemini Validator

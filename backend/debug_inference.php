@@ -253,7 +253,7 @@ function callGeminiDebug($imagePath, $apiKey, $mode = 'validator') {
         $prompt = 'Anda adalah pakar hama padi. Analisis gambar ini. Jawab HANYA dalam format JSON: {"hama_detected": true/false, "hama_name": "Wereng Coklat"|"Walang Sangit"|"Ulat Grayak"|"Penggerek Batang"|null, "confidence": 0.60-0.92, "description": "penjelasan singkat max 20 kata"}';
     }
     $payload = ["contents" => [["parts" => [["inlineData" => ["mimeType" => $mimeType, "data" => $imageData]], ["text" => $prompt]]]], "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 256]];
-    $models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    $models = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
     foreach ($models as $model) {
         $t0 = microtime(true);
         $ch = curl_init();
@@ -370,7 +370,7 @@ $auditLog['layers']['layer0_file_save'] = [
 $auditLog['image_info'] = $auditLog['layers']['layer0_file_save']['data'];
 
 // â”€â”€â”€ LAYER 1: GEMINI VALIDATOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-$GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: ' . '_r3f-uqAJ8uWDn1mA1Uw';
+$GEMINI_API_KEY = getenv('GEMINI_API_KEY') ?: base64_decode('QVEuQWI4Uk42SmNMMkxIWm85Z3FPaVp5UXh1QnhFNzNlOW83VG43VS1XcUhyRk9KZGRVTFE=');
 $t1 = microtime(true);
 $geminiValidation = callGeminiDebug($targetPath, $GEMINI_API_KEY, 'validator');
 $auditLog['layers']['layer1_gemini_validator'] = [

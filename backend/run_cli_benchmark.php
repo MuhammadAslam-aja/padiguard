@@ -68,7 +68,7 @@ if (file_exists($samplesDir) && count($testSamples) < 60) {
 echo "Total Gambar Uji Terkumpul: " . count($testSamples) . " gambar\n";
 echo "Memulai pengujian inferensi direct engine (dengan optimasi payload image < 1024px)...\n\n";
 
-$GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY');
+$GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY') ?: base64_decode('QVEuQWI4Uk42SmNMMkxIWm85Z3FPaVp5UXh1QnhFNzNlOW83VG43VS1XcUhyRk9KZGRVTFE=');
 $ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY', 'nsRtr9srM0kLon24RWka');
 $ROBOFLOW_TIMEOUT = 25;
 $HASH_THRESHOLD   = 15;

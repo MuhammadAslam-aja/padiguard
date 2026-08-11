@@ -73,7 +73,7 @@ require_once __DIR__ . '/mailer.php';
 $GEMINI_API_KEY   = getEnvVar('GEMINI_API_KEY');
 if (empty($GEMINI_API_KEY)) {
     // Fallback key (encoded untuk keamanan repository)
-    $GEMINI_API_KEY = base64_decode('QVEuQWI4Uk42Slg3eHkyeUNENk5nd3pvYUNIUm9fSGJScUpuSmpjV2RScG1VQzRGX1p4UQ==');
+    $GEMINI_API_KEY = base64_decode('QVEuQWI4Uk42SmNMMkxIWm85Z3FPaVp5UXh1QnhFNzNlOW83VG43VS1XcUhyRk9KZGRVTFE=');
 }
 $ROBOFLOW_API_KEY = getEnvVar('ROBOFLOW_API_KEY', 'nsRtr9srM0kLon24RWka');
 $ROBOFLOW_TIMEOUT = (int)(getEnvVar('ROBOFLOW_TIMEOUT') ?: 25);
@@ -199,7 +199,7 @@ Jawab HANYA dalam format JSON valid ini (tanpa teks lain):
         "generationConfig" => ["temperature" => 0.05, "maxOutputTokens" => 256]
     ];
     
-    $models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+    $models = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
     $response = null;
     $httpCode = 0;
     
@@ -286,7 +286,7 @@ Jika gambar adalah sawah sehat, sawah normal, atau tidak ada tanda hama, kembali
         ]
     ];
     
-    $models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash'];
+    $models = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
     $response = null;
     $httpCode = 0;
     
@@ -391,6 +391,19 @@ if (empty($inputData) && !empty($_POST)) {
 }
 
 // 5. ROUTING TABLE
+
+// Route: /api-status (Halaman status visual AI untuk verifikasi dosen/penguji)
+if (($path === '/api-status' || $path === '/api-status/') && $method === 'GET') {
+    while (ob_get_level() > 0) @ob_end_clean();
+    header_remove('Content-Type');
+    $statusFile = __DIR__ . '/api-status.php';
+    if (file_exists($statusFile)) {
+        include $statusFile;
+    } else {
+        echo '<p style="font-family:monospace;padding:2rem;color:red">api-status.php tidak ditemukan.</p>';
+    }
+    exit;
+}
 
 // Route: /health (Requirement 4 & Public Health Check)
 if ($path === '/health' && $method === 'GET') {
