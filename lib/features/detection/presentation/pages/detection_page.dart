@@ -19,6 +19,7 @@ import '../../../faq/presentation/pages/faq_page.dart';
 
 // ─── Langkah proses inferensi YOLO ─────────────────────────────────────────
 const List<String> _inferenceSteps = [
+  '🌾  Memvalidasi gambar tanaman padi...',
   '📤  Gambar dikirim ke server...',
   '🔍  Model YOLOv12 melakukan inferensi...',
   '🌾  Menganalisis kematangan padi...',
@@ -258,20 +259,32 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
             ? resData['message'].toString()
             : 'Gagal menganalisis gambar.';
 
-        // Cek apakah pesan merupakan penolakan non-padi
-        final isNonRiceMsg = serverMsg.toLowerCase().contains('non-padi') ||
+        // Deteksi non-padi: utamakan error_code eksplisit dari backend,
+        // fallback ke string matching untuk kompatibilitas
+        final bool isNonRice = (resData is Map &&
+                resData['error_code'] == 'NON_RICE_IMAGE') ||
             serverMsg.toLowerCase().contains('bukan tanaman padi') ||
-            serverMsg.toLowerCase().contains('gambar terdeteksi sebagai');
+            serverMsg.toLowerCase().contains('non-padi') ||
+            serverMsg.toLowerCase().contains('gambar terdeteksi');
 
         setState(() {
-          _errorMessage = serverMsg;
+          _errorMessage = isNonRice
+              ? 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.'
+              : serverMsg;
           _isAnalyzing = false;
-          _isNonRice = isNonRiceMsg;
+          _isNonRice = isNonRice;
+          // Hapus preview gambar non-padi agar tidak membingungkan
+          if (isNonRice) {
+            _pickedFile = null;
+            _webImageBytes = null;
+          }
         });
       }
     } catch (e) {
       _stopStepAnimation();
       String errMsg = 'Gagal menganalisis gambar.';
+      bool isNonRiceErr = false;
+
       if (e is DioException) {
         if (e.response != null && e.response!.data != null) {
           dynamic errorData = e.response!.data;
@@ -280,10 +293,20 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
               errorData = jsonDecode(errorData);
             } catch (_) {}
           }
-          if (errorData is Map && errorData['message'] != null) {
+          // Prioritas: cek error_code eksplisit terlebih dahulu
+          if (errorData is Map && errorData['error_code'] == 'NON_RICE_IMAGE') {
+            isNonRiceErr = true;
+            errMsg = 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.';
+          } else if (errorData is Map && errorData['message'] != null) {
             errMsg = errorData['message'].toString();
+            // Fallback string matching
+            isNonRiceErr = errMsg.toLowerCase().contains('bukan tanaman padi') ||
+                errMsg.toLowerCase().contains('non-padi') ||
+                errMsg.toLowerCase().contains('gambar terdeteksi');
           } else if (errorData is String && errorData.isNotEmpty) {
             errMsg = errorData;
+            isNonRiceErr = errMsg.toLowerCase().contains('bukan tanaman padi') ||
+                errMsg.toLowerCase().contains('non-padi');
           } else {
             errMsg =
                 'Respon Server (${e.response!.statusCode}): Gagal memproses gambar.';
@@ -296,14 +319,17 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
         }
       }
 
-      final isNonRiceErr = errMsg.toLowerCase().contains('non-padi') ||
-          errMsg.toLowerCase().contains('bukan tanaman padi') ||
-          errMsg.toLowerCase().contains('gambar terdeteksi sebagai');
-
       setState(() {
-        _errorMessage = errMsg;
+        _errorMessage = isNonRiceErr
+            ? 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.'
+            : errMsg;
         _isAnalyzing = false;
         _isNonRice = isNonRiceErr;
+        // Hapus preview gambar non-padi
+        if (isNonRiceErr) {
+          _pickedFile = null;
+          _webImageBytes = null;
+        }
       });
       if (mounted && !isNonRiceErr) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -734,7 +760,7 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Objek yang terdeteksi bukan tanaman padi',
+                  'Gambar bukan tanaman padi',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -747,11 +773,21 @@ class _DetectionPageState extends ConsumerState<DetectionPage>
           const SizedBox(height: 8),
           Text(
             'Sistem mendeteksi gambar ini bukan tanaman padi (sawah, bulir, atau daun padi). '
-            'Silakan gunakan gambar tanaman padi yang valid untuk melakukan deteksi hama dan kematangan.',
+            'Silakan unggah foto tanaman padi yang valid untuk deteksi hama dan kematangan.',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: const Color(0xFF664D03),
               height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Pastikan foto menampilkan: sawah, daun padi, batang padi, atau bulir padi.',
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: const Color(0xFF856404),
+              fontStyle: FontStyle.italic,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 12),

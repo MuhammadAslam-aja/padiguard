@@ -974,7 +974,8 @@ if ($path === '/detection' && $method === 'POST') {
         if ($geminiValidation['is_rice_plant'] === false) {
             @unlink($targetPath);
             sendResponse(false, [
-                'message' => "Gambar terdeteksi sebagai gambar non-padi. Harap ambil foto tanaman padi yang valid (sawah, daun, atau batang padi)."
+                'error_code' => 'NON_RICE_IMAGE',
+                'message'    => 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.'
             ], 400);
         }
         
@@ -996,9 +997,9 @@ if ($path === '/detection' && $method === 'POST') {
         $auditLog['layers']['pixel_validation'] = $pixelCheck;
         if (!$pixelCheck['valid']) {
             @unlink($targetPath);
-            // Pesan sudah spesifik dari inference_engine (wajah/makanan/tembok/parkiran)
             sendResponse(false, [
-                'message' => $pixelCheck['reason'] . ' Harap ambil foto tanaman padi yang valid (sawah, daun, atau batang padi).'
+                'error_code' => 'NON_RICE_IMAGE',
+                'message'    => $pixelCheck['reason']
             ], 400);
         }
     }
@@ -1131,7 +1132,8 @@ if ($path === '/detection' && $method === 'POST') {
             if ((in_array($c, $rumputClasses) || strpos($c, 'rumput') !== false || strpos($c, 'grass') !== false || strpos($c, 'weed') !== false || strpos($c, 'gulma') !== false) && $conf >= 0.10) {
                 @unlink($targetPath);
                 sendResponse(false, [
-                    'message' => 'Gambar terdeteksi sebagai RUMPUT/GULMA, bukan tanaman padi. Harap ambil foto tanaman padi yang valid (sawah/padi).'
+                    'error_code' => 'NON_RICE_IMAGE',
+                    'message'    => 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.'
                 ], 400);
             }
         }
@@ -1224,7 +1226,8 @@ if ($path === '/detection' && $method === 'POST') {
             if (stripos($label, 'Rumput') !== false || stripos($label, 'Gulma') !== false || stripos($label, 'Weed') !== false) {
                 @unlink($targetPath);
                 sendResponse(false, [
-                    'message' => 'Gambar terdeteksi sebagai RUMPUT/GULMA, bukan tanaman padi. Harap ambil/unggah foto tanaman padi yang valid (sawah/padi).'
+                    'error_code' => 'NON_RICE_IMAGE',
+                    'message'    => 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.'
                 ], 400);
             }
 

@@ -1,6 +1,6 @@
 <?php
 // inference_engine.php - Core Engine untuk Validasi Piksel, Gemini AI, Roboflow, & Hash Matching
-// Version 2.5.0 - Comprehensive Non-Padi Rejection + Improved Messages
+// Version 2.6.0 - Stricter Non-Padi Rejection + NON_RICE_IMAGE error_code Support
 
 require_once __DIR__ . '/connection.php';
 
@@ -324,57 +324,67 @@ if (!function_exists('isRicePlantImage')) {
         $brightArtRatio     = $brightArtificialCount / $totalSamples;
 
         // =======================================================================
-        // KRITERIA PENOLAKAN - Multi-Kategori dengan Pesan Tepat
+        // KRITERIA PENOLAKAN - Multi-Kategori dengan Pesan Konsisten
+        // Version 2.6.0: Threshold diperketat untuk mengurangi false-acceptance
         // =======================================================================
+
+        $rejectMsg = 'Gambar bukan tanaman padi. Silakan unggah foto tanaman padi untuk analisis.';
 
         // [A] Tembok / Lantai Polos / Plafon
         if ($wallRatio > 0.55 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
 
-        // [B] Wajah / Tubuh Manusia
-        if ($skinRatio >= 0.08 && $riceRatio < 0.10 && $wallRatio < 0.30) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+        // [B] Wajah / Tubuh Manusia / Selfie
+        // Threshold diturunkan 0.08 → 0.06 agar selfie dan foto tangan lebih terdeteksi
+        if ($skinRatio >= 0.06 && $riceRatio < 0.10 && $wallRatio < 0.30) {
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
 
         // [C] Makanan
         if ($foodRatio > 0.12 && $riceRatio < 0.10) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
         
         // [D] Kemasan Produk / Objek Buatan
         if ($brightArtRatio > 0.05 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
 
-        // [E] Parkiran / Outdoor Non-Padi
+        // [E] Parkiran / Outdoor Non-Padi (aspal, jalan, kendaraan)
         if (($asphaltRatio + $grayRatio) > 0.50 && $riceRatio < 0.06) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
 
         // [F] Ruangan Indoor / Area Gelap
         if ($indoorDarkRatio > 0.25 && ($grayRatio + $asphaltRatio) > 0.30 && $riceRatio < 0.05) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
 
         // [G] Non-Padi Umum
-        if ($riceRatio < 0.03 || ($indoorDarkRatio + $grayRatio > 0.45 && $riceRatio < 0.05)) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+        // Threshold diperketat 0.03 → 0.05 agar gambar tanpa ciri padi lebih mudah ditolak
+        if ($riceRatio < 0.05 || ($indoorDarkRatio + $grayRatio > 0.45 && $riceRatio < 0.05)) {
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
         
         // [H] Pakaian / Baju
         if ($clothingRatio > 0.15 && $riceRatio < 0.08) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
         
-        // [I] Dokumen / Screenshot
+        // [I] Dokumen / Screenshot / Layar HP
         if ($docRatio > 0.75) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
         
-        // [J] Langit / Objek Biru
-        if (($blueRatio + $grayRatio) > 0.80 && $riceRatio < 0.03) {
-            return ['valid' => false, 'reason' => 'Gambar terdeteksi sebagai gambar non-padi.'];
+        // [J] Langit / Objek Biru / Kendaraan
+        if (($blueRatio + $grayRatio) > 0.80 && $riceRatio < 0.05) {
+            return ['valid' => false, 'reason' => $rejectMsg];
+        }
+
+        // [K] Kombinasi pakaian + wajah + gelap (foto manusia dengan latar belakang gelap)
+        if ($skinRatio >= 0.04 && $clothingRatio >= 0.08 && $riceRatio < 0.08) {
+            return ['valid' => false, 'reason' => $rejectMsg];
         }
         
         return ['valid' => true, 'reason' => ''];
